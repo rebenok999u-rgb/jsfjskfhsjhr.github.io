@@ -1,0 +1,4376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>マンゴノフキクル — Messenger</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --tg-bg: #0a0a12;
+            --tg-secondary: #12121e;
+            --tg-surface: #1a1a2e;
+            --tg-input: #22223a;
+            --tg-border: #2a2a3e;
+            --tg-text: #e2e8f0;
+            --tg-text-secondary: #94a3b8;
+            --tg-text-muted: #64748b;
+            --tg-accent: #ff6b6b;
+            --tg-accent-hover: #e55a5a;
+            --tg-blue: #4da3ff;
+            --tg-online: #34d399;
+            --tg-danger: #ff4757;
+            --tg-warning: #ffa502;
+            --tg-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --radius: 12px;
+            --radius-full: 50px;
+            --transition: 0.15s ease;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: var(--tg-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        .app-container {
+            max-width: 480px;
+            width: 100%;
+            height: 100vh;
+            max-height: 900px;
+            background: var(--tg-secondary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: none;
+            box-shadow: var(--tg-shadow);
+        }
+
+        @media (min-width: 481px) {
+            .app-container {
+                border-radius: 28px;
+                height: 90vh;
+                border: 1px solid var(--tg-border);
+            }
+        }
+
+        .auth-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 24px;
+            flex: 1;
+            background: var(--tg-secondary);
+            overflow-y: auto;
+        }
+
+        .auth-page .logo-big {
+            font-size: 64px;
+            margin-bottom: 4px;
+        }
+
+        .auth-page h1 {
+            color: var(--tg-accent);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            text-align: center;
+        }
+
+        .auth-page .subtitle {
+            color: var(--tg-text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .auth-page .auth-field {
+            width: 100%;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .auth-page .auth-field label {
+            display: block;
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-page .auth-field input {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--tg-surface);
+            border: 2px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 15px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .auth-page .auth-field input:focus {
+            border-color: var(--tg-accent);
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
+        }
+
+        .auth-page .auth-field input::placeholder {
+            color: var(--tg-text-muted);
+        }
+
+        .auth-page .auth-field .hint {
+            color: var(--tg-text-muted);
+            font-size: 10px;
+            margin-top: 3px;
+            opacity: 0.6;
+        }
+
+        .auth-page .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 4px;
+        }
+
+        .auth-page .auth-btn:hover {
+            background: var(--tg-accent-hover);
+            transform: scale(1.01);
+        }
+
+        .auth-page .auth-btn:active {
+            transform: scale(0.98);
+        }
+
+        .auth-page .auth-btn.secondary {
+            background: var(--tg-surface);
+            border: 2px solid var(--tg-border);
+            color: var(--tg-text-muted);
+            margin-top: 6px;
+        }
+
+        .auth-page .auth-btn.secondary:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+        }
+
+        .auth-page .error-msg {
+            color: var(--tg-danger);
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .auth-page .success-msg {
+            color: var(--tg-online);
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .auth-page .security-badge {
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            margin-top: 16px;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .auth-page .tg-channel-link {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--tg-text-muted);
+            font-size: 13px;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: var(--tg-surface);
+            border-radius: var(--radius-full);
+            border: 1px solid var(--tg-border);
+            transition: var(--transition);
+        }
+
+        .auth-page .tg-channel-link:hover {
+            border-color: #1a8cd8;
+            color: var(--tg-text);
+        }
+
+        .auth-page .tg-channel-link svg {
+            width: 20px;
+            height: 20px;
+            fill: #1a8cd8;
+        }
+
+        .auth-page .auth-divider {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .auth-page .auth-divider::before,
+        .auth-page .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--tg-border);
+        }
+
+        .auth-page .auth-divider span {
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            opacity: 0.5;
+        }
+
+        .main-app {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .main-app.active {
+            display: flex;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 6px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            flex-shrink: 0;
+            z-index: 5;
+        }
+
+        .logo {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--tg-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .logo img {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .online-badge {
+            font-size: 10px;
+            color: var(--tg-online);
+            background: rgba(52, 211, 153, 0.08);
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            border: 1px solid rgba(52, 211, 153, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .online-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--tg-online);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .header-btn {
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: var(--tg-text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .header-btn:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+            border-color: var(--tg-accent);
+        }
+
+        .tg-channel-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            background: #1a8cd8;
+            border: none;
+            border-radius: var(--radius-full);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .tg-channel-btn:hover {
+            background: #1976b8;
+            transform: scale(1.02);
+        }
+
+        .tg-channel-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 16px;
+            font-size: 8px;
+            color: var(--tg-text-muted);
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            flex-shrink: 0;
+            opacity: 0.5;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .search-wrapper {
+            position: relative;
+            padding: 4px 12px;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 6px 12px 6px 36px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 12px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-bar:focus {
+            border-color: var(--tg-accent);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.08);
+        }
+
+        .search-bar::placeholder {
+            color: var(--tg-text-muted);
+        }
+
+        .search-wrapper .search-icon {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--tg-text-muted);
+            font-size: 13px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 3px;
+            margin: 0 10px 4px;
+            background: var(--tg-surface);
+            border-radius: var(--radius);
+            padding: 2px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 5px 0;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--tg-text-muted);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .tab-btn.active {
+            background: var(--tg-accent);
+            color: #fff;
+        }
+
+        .tab-btn:hover {
+            color: var(--tg-text);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 3px;
+            padding: 0 10px 4px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .action-btn-main {
+            flex: 1;
+            padding: 4px 4px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: 8px;
+            color: var(--tg-text-secondary);
+            font-size: 9px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            min-width: 40px;
+            white-space: nowrap;
+        }
+
+        .action-btn-main:hover {
+            background: var(--tg-input);
+            border-color: var(--tg-accent);
+            color: var(--tg-text);
+        }
+
+        .action-btn-main.primary {
+            color: var(--tg-accent);
+        }
+        .action-btn-main.primary:hover {
+            background: var(--tg-accent);
+            color: #fff;
+        }
+        .action-btn-main.danger {
+            color: var(--tg-danger);
+        }
+        .action-btn-main.danger:hover {
+            background: var(--tg-danger);
+            color: #fff;
+            border-color: var(--tg-danger);
+        }
+        .action-btn-main.gold {
+            color: #ffd700;
+        }
+        .action-btn-main.gold:hover {
+            background: #ffd700;
+            color: #000;
+            border-color: #ffd700;
+        }
+        .action-btn-main.tg-blue {
+            color: #1a8cd8;
+        }
+        .action-btn-main.tg-blue:hover {
+            background: #1a8cd8;
+            color: #fff;
+            border-color: #1a8cd8;
+        }
+
+        #chatsPanel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 4px 4px 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .chat-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .chat-list::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            background: transparent;
+            position: relative;
+        }
+
+        .chat-item:hover {
+            background: var(--tg-surface);
+        }
+
+        .chat-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--tg-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #fff;
+            font-weight: 600;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .chat-item .avatar .online-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--tg-online);
+            border: 2px solid var(--tg-secondary);
+        }
+
+        .chat-item .avatar.group {
+            background: var(--tg-surface);
+            border: 2px solid var(--tg-accent);
+        }
+        .chat-item .avatar.channel {
+            background: #1a2a3e;
+            border: 2px solid var(--tg-online);
+        }
+
+        .chat-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-item .info .name {
+            color: var(--tg-text);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .chat-item .info .name .verified {
+            color: var(--tg-blue);
+            font-size: 11px;
+        }
+        .chat-item .info .last-msg {
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+        .chat-item .time {
+            color: var(--tg-text-muted);
+            font-size: 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .chat-item .unread-badge {
+            background: var(--tg-accent);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 600;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-item .pin-icon {
+            color: var(--tg-warning);
+            font-size: 10px;
+        }
+
+        .friends-panel {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 0 10px 10px;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .friends-panel.active {
+            display: flex;
+        }
+        .friends-panel .chat-list {
+            flex: 1;
+        }
+        .friends-panel .friend-count {
+            padding: 6px 0;
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .settings-panel {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            background: var(--tg-bg);
+            overflow: hidden;
+            min-height: 0;
+        }
+        .settings-panel.active {
+            display: flex;
+        }
+
+        .settings-panel .settings-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 0 20px 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .settings-panel .settings-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+        .settings-panel .settings-scroll::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+
+        .settings-panel .settings-header {
+            padding: 12px 16px 8px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .settings-panel .settings-header .back-btn {
+            background: none;
+            border: none;
+            color: var(--tg-text-muted);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0;
+            transition: var(--transition);
+        }
+
+        .settings-panel .settings-header .back-btn:hover {
+            color: var(--tg-text);
+        }
+        .settings-panel .settings-header .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tg-text);
+        }
+
+        .settings-panel .settings-section {
+            padding: 8px 0;
+        }
+        .settings-panel .settings-section .section-title {
+            padding: 8px 16px 4px;
+            color: var(--tg-text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-panel .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            cursor: pointer;
+            transition: var(--transition);
+            gap: 12px;
+        }
+
+        .settings-panel .settings-item:hover {
+            background: var(--tg-surface);
+        }
+        .settings-panel .settings-item .icon {
+            font-size: 20px;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .settings-panel .settings-item .content {
+            flex: 1;
+            min-width: 0;
+        }
+        .settings-panel .settings-item .content .label {
+            color: var(--tg-text);
+            font-size: 14px;
+        }
+        .settings-panel .settings-item .content .sub {
+            color: var(--tg-text-muted);
+            font-size: 12px;
+            margin-top: 1px;
+        }
+        .settings-panel .settings-item .arrow {
+            color: var(--tg-text-muted);
+            font-size: 16px;
+            flex-shrink: 0;
+            opacity: 0.4;
+        }
+        .settings-panel .settings-item .badge-count {
+            background: var(--tg-accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 8px;
+            border-radius: var(--radius-full);
+            flex-shrink: 0;
+        }
+
+        .settings-panel .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .settings-panel .profile-row:hover {
+            background: var(--tg-surface);
+        }
+        .settings-panel .profile-row .avatar-big {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--tg-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .settings-panel .profile-row .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .settings-panel .profile-row .info .name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-text);
+        }
+        .settings-panel .profile-row .info .phone {
+            color: var(--tg-text-muted);
+            font-size: 13px;
+            margin-top: 1px;
+        }
+        .settings-panel .profile-row .arrow {
+            color: var(--tg-text-muted);
+            font-size: 18px;
+            opacity: 0.4;
+        }
+
+        .security-panel {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 14px;
+            color: var(--tg-text);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .security-panel.active {
+            display: flex;
+        }
+        .security-panel::-webkit-scrollbar {
+            width: 3px;
+        }
+        .security-panel::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+
+        .security-panel h3 {
+            color: var(--tg-accent);
+            font-size: 18px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .security-panel .sec-block {
+            background: var(--tg-surface);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--tg-accent);
+        }
+
+        .security-panel .sec-block .sec-title {
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .security-panel .sec-block .sec-text {
+            color: var(--tg-text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .security-panel .sec-block .sec-text strong {
+            color: var(--tg-text);
+        }
+
+        .security-panel .sec-footer {
+            text-align: center;
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--tg-surface);
+        }
+
+        .admin-panel {
+            display: block;
+            margin-top: 8px;
+            background: var(--tg-surface);
+            border-radius: var(--radius);
+            padding: 12px;
+            border: 1px solid var(--tg-border);
+        }
+
+        .admin-panel .admin-title {
+            color: var(--tg-accent);
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-panel .admin-login-area {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .admin-panel .admin-login-area input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 12px;
+            outline: none;
+        }
+        .admin-panel .admin-login-area input:focus {
+            border-color: var(--tg-accent);
+        }
+        .admin-panel .admin-login-area button {
+            padding: 8px 20px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+        }
+        .admin-panel .admin-login-area button:hover {
+            background: var(--tg-accent-hover);
+        }
+        .admin-panel .admin-login-status {
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            text-align: center;
+            min-height: 18px;
+            margin-bottom: 4px;
+        }
+        .admin-panel .admin-login-status.error {
+            color: var(--tg-danger);
+        }
+        .admin-panel .admin-login-status.success {
+            color: var(--tg-online);
+        }
+
+        .admin-panel .admin-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .admin-panel .admin-stats .stat {
+            background: var(--tg-input);
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+        }
+        .admin-panel .admin-stats .stat .num {
+            color: var(--tg-accent);
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .admin-panel .admin-stats .stat .label {
+            color: var(--tg-text-muted);
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-panel .admin-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-bottom: 6px;
+        }
+        .admin-panel .admin-toolbar .admin-btn {
+            padding: 6px 10px;
+            background: var(--tg-input);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            text-align: center;
+            min-width: 50px;
+        }
+        .admin-panel .admin-toolbar .admin-btn:hover {
+            background: var(--tg-accent);
+            color: #fff;
+            border-color: var(--tg-accent);
+        }
+        .admin-panel .admin-toolbar .admin-btn.danger {
+            border-color: var(--tg-danger);
+            color: var(--tg-danger);
+        }
+        .admin-panel .admin-toolbar .admin-btn.danger:hover {
+            background: var(--tg-danger);
+            color: #fff;
+        }
+        .admin-panel .admin-toolbar .admin-btn.success {
+            border-color: var(--tg-online);
+            color: var(--tg-online);
+        }
+        .admin-panel .admin-toolbar .admin-btn.success:hover {
+            background: var(--tg-online);
+            color: #fff;
+        }
+
+        .admin-panel .admin-section {
+            margin-top: 6px;
+            border-top: 1px solid var(--tg-border);
+            padding-top: 6px;
+        }
+        .admin-panel .admin-section-title {
+            color: var(--tg-text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .admin-panel .admin-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .admin-panel .admin-row input {
+            flex: 1;
+            padding: 5px 8px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: 6px;
+            color: var(--tg-text);
+            font-size: 11px;
+            outline: none;
+        }
+        .admin-panel .admin-row input:focus {
+            border-color: var(--tg-accent);
+        }
+        .admin-panel .admin-row button {
+            padding: 5px 12px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 11px;
+        }
+        .admin-panel .admin-row button:hover {
+            background: var(--tg-accent-hover);
+        }
+
+        .admin-panel .admin-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--tg-surface);
+        }
+        .admin-panel .admin-list-item .name {
+            color: var(--tg-text);
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .admin-panel .admin-list-item .name .online {
+            color: var(--tg-online);
+        }
+        .admin-panel .admin-list-item .name .offline {
+            color: var(--tg-text-muted);
+        }
+        .admin-panel .admin-list-item .name .admin-tag {
+            background: var(--tg-accent);
+            color: #fff;
+            font-size: 6px;
+            padding: 1px 4px;
+            border-radius: var(--radius-full);
+        }
+        .admin-panel .admin-list-item .actions {
+            display: flex;
+            gap: 3px;
+        }
+        .admin-panel .admin-list-item .actions button {
+            padding: 1px 6px;
+            font-size: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--tg-border);
+            background: var(--tg-surface);
+            color: var(--tg-text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .admin-panel .admin-list-item .actions button:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+        }
+        .admin-panel .admin-list-item .actions button.danger {
+            border-color: var(--tg-danger);
+            color: var(--tg-danger);
+        }
+        .admin-panel .admin-list-item .actions button.danger:hover {
+            background: var(--tg-danger);
+            color: #fff;
+        }
+        .admin-panel .admin-list-item .actions button.success {
+            border-color: var(--tg-online);
+            color: var(--tg-online);
+        }
+        .admin-panel .admin-list-item .actions button.success:hover {
+            background: var(--tg-online);
+            color: #fff;
+        }
+
+        .admin-panel .admin-logout-btn {
+            margin-top: 8px;
+            padding: 6px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            text-align: center;
+        }
+        .admin-panel .admin-logout-btn:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+            border-color: var(--tg-danger);
+        }
+
+        .chat-window {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            background: var(--tg-bg);
+            overflow: hidden;
+            animation: fadeIn 0.2s ease;
+            min-height: 0;
+        }
+        .chat-window.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            flex-shrink: 0;
+        }
+
+        .chat-header .back-btn {
+            background: none;
+            border: none;
+            color: var(--tg-text-muted);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 4px;
+            transition: var(--transition);
+        }
+        .chat-header .back-btn:hover {
+            color: var(--tg-text);
+        }
+        .chat-header .chat-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--tg-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .chat-header .chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-header .chat-info .chat-name {
+            color: var(--tg-text);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .chat-header .chat-info .chat-status {
+            color: var(--tg-text-muted);
+            font-size: 10px;
+        }
+        .chat-header .chat-info .chat-status.online {
+            color: var(--tg-online);
+        }
+        .chat-header .header-actions-right {
+            display: flex;
+            gap: 3px;
+        }
+        .chat-header .header-actions-right button {
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: var(--tg-text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-header .header-actions-right button:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+            border-color: var(--tg-accent);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 8px 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 3px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+
+        .msg {
+            max-width: 85%;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            word-break: break-word;
+            animation: msgAppear 0.15s ease;
+            position: relative;
+            line-height: 1.35;
+        }
+        @keyframes msgAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .msg-self {
+            background: var(--tg-accent);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .msg-other {
+            background: var(--tg-surface);
+            color: var(--tg-text);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .msg-system {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--tg-text-muted);
+            align-self: center;
+            font-size: 10px;
+            padding: 3px 12px;
+            border-radius: var(--radius-full);
+            max-width: 90%;
+        }
+        .msg .msg-nick {
+            font-weight: 600;
+            font-size: 10px;
+            color: #ff6b6b;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .msg-other .msg-nick {
+            color: var(--tg-blue);
+        }
+        .msg .msg-time {
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.2);
+            margin-top: 2px;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+        }
+        .msg-other .msg-time {
+            color: var(--tg-text-muted);
+        }
+        .msg .msg-time .read-status {
+            color: var(--tg-blue);
+        }
+
+        .msg .msg-actions {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            display: none;
+            gap: 2px;
+        }
+        .msg:hover .msg-actions {
+            display: flex;
+        }
+        .msg .msg-actions button {
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: 4px;
+            color: var(--tg-text-muted);
+            font-size: 7px;
+            cursor: pointer;
+            padding: 1px 3px;
+            transition: var(--transition);
+        }
+        .msg .msg-actions button:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+        }
+        .msg .msg-actions .delete-btn:hover {
+            color: var(--tg-danger);
+            border-color: var(--tg-danger);
+        }
+        .msg .msg-actions .edit-btn:hover {
+            color: var(--tg-accent);
+            border-color: var(--tg-accent);
+        }
+
+        .msg .file-container {
+            margin-top: 3px;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .msg .file-container img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 8px;
+            display: block;
+        }
+        .msg .file-container .file-link {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            color: var(--tg-accent);
+            text-decoration: none;
+            font-size: 11px;
+        }
+
+        .msg .voice-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 3px;
+        }
+        .msg .voice-container .voice-play {
+            background: var(--tg-accent);
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: var(--transition);
+        }
+        .msg .voice-container .voice-play:hover {
+            transform: scale(1.05);
+        }
+        .msg .voice-container .voice-wave {
+            flex: 1;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .msg .voice-container .voice-wave .bar {
+            background: var(--tg-accent);
+            width: 3px;
+            border-radius: 2px;
+            animation: wave 0.8s ease infinite alternate;
+        }
+        .msg .voice-container .voice-wave .bar:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        .msg .voice-container .voice-wave .bar:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        .msg .voice-container .voice-wave .bar:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+        .msg .voice-container .voice-wave .bar:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+        @keyframes wave {
+            from {
+                height: 4px;
+            }
+            to {
+                height: 14px;
+            }
+        }
+        .msg .voice-container .voice-time {
+            color: var(--tg-text-muted);
+            font-size: 9px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 4px;
+            padding: 6px 10px;
+            background: var(--tg-secondary);
+            border-top: 1px solid var(--tg-border);
+            flex-shrink: 0;
+            align-items: flex-end;
+        }
+
+        .chat-input-area input[type="text"] {
+            flex: 1;
+            padding: 6px 14px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius-full);
+            color: var(--tg-text);
+            font-size: 13px;
+            outline: none;
+            min-width: 50px;
+            transition: var(--transition);
+            min-height: 36px;
+        }
+        .chat-input-area input[type="text"]:focus {
+            border-color: var(--tg-accent);
+        }
+        .chat-input-area input[type="text"]::placeholder {
+            color: var(--tg-text-muted);
+        }
+        .chat-input-area .send-btn {
+            padding: 6px 14px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: var(--radius-full);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-height: 36px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-input-area .send-btn:hover {
+            background: var(--tg-accent-hover);
+            transform: scale(1.02);
+        }
+        .chat-input-area .send-btn:active {
+            transform: scale(0.95);
+        }
+        .chat-input-area .action-btn {
+            padding: 6px 8px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius-full);
+            color: var(--tg-text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            min-height: 36px;
+            min-width: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-input-area .action-btn:hover {
+            background: var(--tg-input);
+            color: var(--tg-text);
+        }
+        .chat-input-area .action-btn.active {
+            border-color: var(--tg-accent);
+            color: var(--tg-accent);
+        }
+
+        .emoji-panel,
+        .sticker-panel {
+            display: none;
+            flex-wrap: wrap;
+            gap: 3px;
+            padding: 6px 10px;
+            background: var(--tg-secondary);
+            border-bottom: 1px solid var(--tg-border);
+            flex-shrink: 0;
+            max-height: 130px;
+            overflow-y: auto;
+        }
+        .emoji-panel.active,
+        .sticker-panel.active {
+            display: flex;
+        }
+        .emoji-panel span,
+        .sticker-panel span {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 3px 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        .emoji-panel span:hover,
+        .sticker-panel span:hover {
+            background: var(--tg-surface);
+            transform: scale(1.1);
+        }
+        .sticker-panel span {
+            font-size: 28px;
+            padding: 4px 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--tg-secondary);
+            border: 1px solid var(--tg-accent);
+            border-radius: var(--radius);
+            padding: 8px 16px;
+            color: var(--tg-text);
+            font-size: 12px;
+            z-index: 9999;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: notifSlide 0.4s ease;
+            display: none;
+            max-width: 90%;
+            backdrop-filter: blur(10px);
+        }
+        .notification.show {
+            display: block;
+        }
+        .notification .notif-nick {
+            color: var(--tg-accent);
+            font-weight: 600;
+        }
+        .notification .notif-text {
+            color: var(--tg-text-secondary);
+        }
+        @keyframes notifSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--tg-secondary);
+            border-radius: 18px;
+            padding: 20px;
+            max-width: 340px;
+            width: 90%;
+            border: 1px solid var(--tg-border);
+            box-shadow: var(--tg-shadow);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 {
+            color: var(--tg-text);
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 17px;
+        }
+        .modal .modal-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 13px;
+            outline: none;
+            margin-bottom: 8px;
+        }
+        .modal .modal-input:focus {
+            border-color: var(--tg-accent);
+        }
+        .modal .modal-btn {
+            padding: 8px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+        .modal .modal-btn:hover {
+            background: var(--tg-accent-hover);
+        }
+        .modal .modal-btn.secondary {
+            background: var(--tg-surface);
+            color: var(--tg-text-muted);
+            border: 1px solid var(--tg-border);
+            margin-top: 4px;
+        }
+        .modal .modal-btn.secondary:hover {
+            background: var(--tg-input);
+        }
+        .modal .invite-link {
+            background: var(--tg-surface);
+            padding: 8px;
+            border-radius: var(--radius);
+            word-break: break-all;
+            font-size: 11px;
+            color: var(--tg-text);
+            margin: 8px 0;
+            border: 1px solid var(--tg-border);
+            user-select: all;
+        }
+        .modal .copy-btn {
+            padding: 6px 14px;
+            background: var(--tg-online);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+        .modal .copy-btn:hover {
+            opacity: 0.8;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .settings-modal.active {
+            display: flex;
+        }
+        .settings-modal .modal-content {
+            background: var(--tg-secondary);
+            border-radius: 18px;
+            padding: 24px;
+            max-width: 380px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--tg-border);
+            box-shadow: var(--tg-shadow);
+            -webkit-overflow-scrolling: touch;
+        }
+        .settings-modal .modal-content::-webkit-scrollbar {
+            width: 3px;
+        }
+        .settings-modal .modal-content::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+        .settings-modal .modal-content h3 {
+            color: var(--tg-text);
+            font-size: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .settings-modal .modal-content .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--tg-surface);
+            border: 1px solid var(--tg-border);
+            border-radius: var(--radius);
+            color: var(--tg-text);
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 10px;
+        }
+        .settings-modal .modal-content .modal-input:focus {
+            border-color: var(--tg-accent);
+        }
+        .settings-modal .modal-content .modal-btn {
+            padding: 10px;
+            background: var(--tg-accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .settings-modal .modal-content .modal-btn:hover {
+            background: var(--tg-accent-hover);
+        }
+        .settings-modal .modal-content .modal-btn.secondary {
+            background: var(--tg-surface);
+            color: var(--tg-text-muted);
+            border: 1px solid var(--tg-border);
+        }
+        .settings-modal .modal-content .modal-btn.secondary:hover {
+            background: var(--tg-input);
+        }
+        .settings-modal .modal-content .modal-option {
+            padding: 10px 14px;
+            background: var(--tg-surface);
+            border-radius: var(--radius);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--tg-text);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .settings-modal .modal-content .modal-option:hover {
+            background: var(--tg-input);
+            border-color: var(--tg-accent);
+        }
+        .settings-modal .modal-content .modal-option .check {
+            margin-left: auto;
+            color: var(--tg-accent);
+        }
+        .settings-modal .modal-content .modal-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .settings-modal .modal-content .modal-row .modal-input {
+            flex: 1;
+        }
+        .settings-modal .modal-content .modal-row .modal-btn {
+            flex: 0 0 auto;
+            width: auto;
+            padding: 10px 16px;
+        }
+        .settings-modal .modal-content .toggle {
+            width: 44px;
+            height: 26px;
+            background: var(--tg-input);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+            border: 1px solid var(--tg-border);
+        }
+        .settings-modal .modal-content .toggle.active {
+            background: var(--tg-accent);
+            border-color: var(--tg-accent);
+        }
+        .settings-modal .modal-content .toggle .knob {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: var(--transition);
+        }
+        .settings-modal .modal-content .toggle.active .knob {
+            left: 20px;
+        }
+
+        .antivirus-badge {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            background: #00ff88;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 8px;
+            font-weight: 700;
+            z-index: 9998;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            animation: pulse 2s infinite;
+            display: none;
+        }
+        .antivirus-badge.active {
+            display: block;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .honeypot {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+            .header {
+                padding: 6px 10px 4px;
+            }
+            .logo {
+                font-size: 12px;
+                letter-spacing: 0.5px;
+            }
+            .chat-item {
+                padding: 4px 6px;
+            }
+            .chat-item .avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
+            }
+            .chat-window {
+                height: 100%;
+            }
+            .chat-messages {
+                padding: 6px 8px;
+            }
+            .msg {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            .chat-input-area {
+                padding: 4px 8px;
+            }
+            .chat-input-area input[type="text"] {
+                font-size: 12px;
+                padding: 4px 10px;
+                min-height: 32px;
+            }
+            .chat-input-area .send-btn,
+            .chat-input-area .action-btn {
+                min-height: 32px;
+                min-width: 32px;
+                font-size: 13px;
+                padding: 4px 8px;
+            }
+            .auth-page {
+                padding: 16px 14px;
+            }
+            .auth-page h1 {
+                font-size: 22px;
+                letter-spacing: 1px;
+            }
+            .auth-page input {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            .auth-page .auth-btn {
+                font-size: 13px;
+                padding: 8px;
+            }
+            .modal {
+                padding: 14px;
+            }
+            .action-buttons {
+                gap: 2px;
+                padding: 0 8px 3px;
+            }
+            .action-btn-main {
+                font-size: 8px;
+                padding: 3px 3px;
+                min-width: 30px;
+            }
+            .tg-channel-btn {
+                font-size: 8px;
+                padding: 2px 6px;
+            }
+            .tg-channel-btn svg {
+                width: 10px;
+                height: 10px;
+            }
+            .settings-panel .profile-row {
+                padding: 10px 14px;
+            }
+            .settings-panel .profile-row .avatar-big {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+            .settings-panel .settings-item {
+                padding: 8px 14px;
+            }
+            .settings-panel .settings-item .icon {
+                font-size: 18px;
+                width: 28px;
+            }
+            .settings-panel .settings-item .content .label {
+                font-size: 13px;
+            }
+            .tabs .tab-btn {
+                font-size: 9px;
+                padding: 3px 0;
+            }
+            .search-wrapper {
+                padding: 3px 10px;
+            }
+            .search-bar {
+                font-size: 11px;
+                padding: 4px 8px 4px 30px;
+            }
+            .search-wrapper .search-icon {
+                left: 20px;
+                font-size: 11px;
+            }
+            .status-bar {
+                font-size: 7px;
+                padding: 1px 12px;
+            }
+            .settings-panel .settings-header {
+                padding: 10px 14px 6px;
+            }
+            .settings-panel .settings-header .title {
+                font-size: 16px;
+            }
+            .admin-panel .admin-stats {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 4px;
+            }
+            .admin-panel .admin-stats .stat .num {
+                font-size: 14px;
+            }
+            .admin-panel .admin-toolbar .admin-btn {
+                font-size: 8px;
+                padding: 4px 8px;
+                min-width: 40px;
+            }
+            .admin-panel .admin-login-area input {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            .admin-panel .admin-login-area button {
+                font-size: 11px;
+                padding: 6px 14px;
+            }
+            .settings-modal .modal-content {
+                padding: 16px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--tg-accent);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== NOTIFICATION ===== -->
+    <div class="notification" id="notification">
+        <span class="notif-nick" id="notifNick">Гость</span>
+        <span class="notif-text" id="notifText">: новое сообщение</span>
+    </div>
+
+    <div class="antivirus-badge" id="antivirusBadge">🛡️ ЗАЩИЩЁН</div>
+
+    <div class="honeypot">
+        <input type="text" id="fakeEmail" value="">
+        <input type="password" id="fakePassword" value="">
+    </div>
+
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="modal-content" id="settingsModalContent"></div>
+    </div>
+
+    <!-- ===== INVITE MODAL ===== -->
+    <div class="modal-overlay" id="inviteModal">
+        <div class="modal">
+            <h3>🔗 Пригласить друга</h3>
+            <p style="color:var(--tg-text-secondary);font-size:12px;text-align:center;margin-bottom:8px;">
+                Отправь ссылку другу
+            </p>
+            <div class="invite-link" id="inviteLink">Загрузка...</div>
+            <button class="copy-btn" onclick="copyInviteLink()">📋 Скопировать</button>
+            <button class="modal-btn secondary" onclick="closeInviteModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- ===== ADD FRIEND MODAL ===== -->
+    <div class="modal-overlay" id="addFriendModal">
+        <div class="modal">
+            <h3>👤 Добавить друга</h3>
+            <p style="color:var(--tg-text-secondary);font-size:12px;text-align:center;margin-bottom:8px;">
+                Введи ID друга (9 цифр)
+            </p>
+            <input class="modal-input" id="friendIdInput" placeholder="ID друга">
+            <button class="modal-btn" onclick="sendFriendRequest()">📨 Отправить запрос</button>
+            <button class="modal-btn secondary" onclick="closeAddFriendModal()">Отмена</button>
+        </div>
+    </div>
+
+    <!-- ===== APP CONTAINER ===== -->
+    <div class="app-container" id="appContainer">
+
+        <!-- ===== AUTH PAGE ===== -->
+        <div class="auth-page" id="authPage">
+            <div class="logo-big">🔐</div>
+            <h1>マンゴノフキクル</h1>
+            <div class="subtitle">Точно как Telegram</div>
+
+            <div id="authMessage" class="error-msg"></div>
+
+            <div class="auth-field">
+                <label for="authNick">👤 Никнейм</label>
+                <input type="text" id="authNick" placeholder="Введите никнейм (2-20 символов)" maxlength="20">
+                <div class="hint">Только латиница и цифры</div>
+            </div>
+
+            <div class="auth-field">
+                <label for="authPassword">🔑 Пароль</label>
+                <input type="password" id="authPassword" placeholder="Минимум 4 символа">
+                <div class="hint">Используйте буквы и цифры</div>
+            </div>
+
+            <div class="auth-field" id="confirmField" style="display:none;">
+                <label for="authPasswordConfirm">🔑 Повторите пароль</label>
+                <input type="password" id="authPasswordConfirm" placeholder="Введите пароль ещё раз">
+            </div>
+
+            <button class="auth-btn" id="authLoginBtn">🔓 Войти</button>
+            <button class="auth-btn secondary" id="authToggleBtn">📝 Зарегистрироваться</button>
+
+            <div class="auth-divider">
+                <span>или</span>
+            </div>
+
+            <div class="security-badge">
+                🔒 256-битное шифрование
+            </div>
+
+            <a href="https://t.me/realmmessenger" target="_blank" class="tg-channel-link">
+                <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                Наш Telegram-канал
+            </a>
+        </div>
+
+        <!-- ===== MAIN APP ===== -->
+        <div class="main-app" id="mainApp">
+
+            <!-- HEADER -->
+            <div class="header">
+                <div class="logo">
+                    <img src="logo.png" alt="マンゴノフキクル" onerror="this.style.display='none'">
+                    マンゴノフキクル
+                </div>
+                <div class="header-actions">
+                    <a href="https://t.me/realmmessenger" target="_blank" class="tg-channel-btn">
+                        <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                        Канал
+                    </a>
+                    <div class="online-badge">
+                        <span class="dot"></span>
+                        <span id="onlineCount">0</span>
+                    </div>
+                    <button class="header-btn" onclick="logoutUser()" title="Выйти">🚪</button>
+                </div>
+            </div>
+
+            <!-- STATUS BAR -->
+            <div class="status-bar">
+                <span>🟢 <span id="statusText">В сети</span></span>
+                <span>⚡ v3.0 • <span id="onlineCount2">0</span> онлайн</span>
+            </div>
+
+            <!-- SEARCH -->
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-bar" id="searchInput" placeholder="Поиск...">
+            </div>
+
+            <!-- TABS -->
+            <div class="tabs" id="mainTabs">
+                <button class="tab-btn active" data-tab="chats">💬 Чаты</button>
+                <button class="tab-btn" data-tab="friends">👥 Друзья</button>
+                <button class="tab-btn" data-tab="settings">⚙</button>
+                <button class="tab-btn" data-tab="security">🔐</button>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-buttons" id="actionButtons">
+                <button class="action-btn-main gold" onclick="openInviteModal()">🔗 Пригласить</button>
+                <button class="action-btn-main primary" id="createGroupBtn">➕ Группа</button>
+                <button class="action-btn-main tg-blue" id="createChannelBtn">📡 Канал</button>
+                <button class="action-btn-main" onclick="openAddFriendModal()">👤 + Друг</button>
+            </div>
+
+            <!-- CHATS PANEL -->
+            <div id="chatsPanel">
+                <div class="chat-list" id="chatList"></div>
+            </div>
+
+            <!-- FRIENDS PANEL -->
+            <div class="friends-panel" id="friendsPanel">
+                <div class="chat-list" id="friendsList"></div>
+                <div class="friend-count">👥 <span id="friendCount">0</span> друзей онлайн</div>
+            </div>
+
+            <!-- CHAT WINDOW -->
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-header">
+                    <button class="back-btn" id="closeChatBtn">‹</button>
+                    <div class="chat-avatar" id="chatAvatar">👤</div>
+                    <div class="chat-info">
+                        <div class="chat-name" id="chatTitle">Чат</div>
+                        <div class="chat-status" id="chatStatus">онлайн</div>
+                    </div>
+                    <div class="header-actions-right">
+                        <button id="pinBtn" title="Закрепить">📌</button>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <div class="emoji-panel" id="emojiPanelChat">
+                    <span>😀</span><span>😂</span><span>😍</span><span>🤔</span><span>😎</span><span>🔥</span>
+                    <span>💀</span><span>👀</span><span>✨</span><span>💪</span><span>🎉</span><span>❤️</span>
+                    <span>💜</span><span>🖤</span><span>💛</span><span>💚</span><span>💙</span><span>🧡</span>
+                    <span>🚀</span><span>💎</span><span>👑</span><span>🌟</span><span>⚡</span><span>🔥</span>
+                </div>
+
+                <div class="sticker-panel" id="stickerPanelChat">
+                    <span>😊</span><span>😂</span><span>🥳</span><span>😎</span><span>🔥</span><span>💀</span>
+                    <span>❤️</span><span>💜</span><span>✨</span><span>🌟</span><span>🚀</span><span>💎</span>
+                    <span>👑</span><span>⚡</span><span>🎉</span><span>🤣</span><span>😍</span><span>🥰</span>
+                </div>
+
+                <div class="chat-input-area">
+                    <button class="action-btn" id="emojiBtnChat">😊</button>
+                    <button class="action-btn" id="fileBtnChat">📎</button>
+                    <button class="action-btn" id="stickerBtnChat">⭐</button>
+                    <button class="action-btn" id="voiceBtnChat">🎙️</button>
+                    <input type="text" id="chatInput" placeholder="Сообщение...">
+                    <button class="send-btn" id="sendBtn">📩</button>
+                </div>
+            </div>
+
+            <!-- SETTINGS PANEL -->
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-header">
+                    <button class="back-btn" id="backFromSettings">‹</button>
+                    <span class="title">Настройки</span>
+                </div>
+
+                <div class="settings-scroll" id="settingsScroll">
+                    <!-- Профиль -->
+                    <div class="profile-row" id="profileRow" onclick="openProfileSettings()">
+                        <div class="avatar-big" id="avatarBig" onclick="event.stopPropagation();changeAvatar()">👤</div>
+                        <div class="info">
+                            <div class="name" id="settingsNick">Гость</div>
+                            <div class="phone" id="settingsPhone">🆔 <span id="settingsId">—</span></div>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <!-- Аккаунт -->
+                    <div class="settings-section">
+                        <div class="section-title">Аккаунт</div>
+                        <div class="settings-item" onclick="openAccountSettings()">
+                            <span class="icon">👤</span>
+                            <div class="content">
+                                <div class="label">Аккаунт</div>
+                                <div class="sub" id="accountSub">Номер, имя пользователя, «О себе»</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                        <div class="settings-item" onclick="openPrivacySettings()">
+                            <span class="icon">🔒</span>
+                            <div class="content">
+                                <div class="label">Конфиденциальность</div>
+                                <div class="sub" id="privacySub">Время захода, устройства, ключи доступа</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    </div>
+
+                    <!-- Чаты -->
+                    <div class="settings-section">
+                        <div class="section-title">Чаты</div>
+                        <div class="settings-item" onclick="openChatSettings()">
+                            <span class="icon">💬</span>
+                            <div class="content">
+                                <div class="label">Настройки чатов</div>
+                                <div class="sub">Обои, ночной режим, анимации</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                        <div class="settings-item" onclick="openFoldersSettings()">
+                            <span class="icon">📂</span>
+                            <div class="content">
+                                <div class="label">Папки с чатами</div>
+                                <div class="sub">Сортировка чатов по папкам</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    </div>
+
+                    <!-- Уведомления -->
+                    <div class="settings-section">
+                        <div class="section-title">Уведомления</div>
+                        <div class="settings-item" onclick="openNotificationsSettings()">
+                            <span class="icon">🔔</span>
+                            <div class="content">
+                                <div class="label">Уведомления</div>
+                                <div class="sub">Звуки, звонки, счётчик сообщений</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    </div>
+
+                    <!-- Данные -->
+                    <div class="settings-section">
+                        <div class="section-title">Данные</div>
+                        <div class="settings-item" onclick="openDataSettings()">
+                            <span class="icon">💾</span>
+                            <div class="content">
+                                <div class="label">Данные и память</div>
+                                <div class="sub">Настройки загрузки медиафайлов</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                        <div class="settings-item" onclick="openDevicesSettings()">
+                            <span class="icon">📱</span>
+                            <div class="content">
+                                <div class="label">Устройства</div>
+                                <div class="sub">Управление активными сеансами</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                        <div class="settings-item" onclick="openBatterySettings()">
+                            <span class="icon">🔋</span>
+                            <div class="content">
+                                <div class="label">Энергосбережение</div>
+                                <div class="sub">Экономия энергии при низком заряде</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    </div>
+
+                    <!-- Язык -->
+                    <div class="settings-section">
+                        <div class="section-title">Язык</div>
+                        <div class="settings-item" onclick="openLanguageSettings()">
+                            <span class="icon">🌐</span>
+                            <div class="content">
+                                <div class="label">Язык</div>
+                                <div class="sub" id="languageSub">Русский</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    </div>
+
+                    <!-- Premium -->
+                    <div class="settings-section">
+                        <div class="section-title" style="color:var(--tg-accent);">⭐ マンゴノフキクル Premium</div>
+                        <div class="settings-item" onclick="openPremiumSettings()" style="border-bottom: none;">
+                            <span class="icon">⭐</span>
+                            <div class="content">
+                                <div class="label" style="color:var(--tg-accent);">Premium</div>
+                                <div class="sub">🎉 ВСЕ ФУНКЦИИ БЕСПЛАТНО!</div>
+                            </div>
+                            <span class="badge-count" style="background:var(--tg-accent);">🔥 Активировать</span>
+                        </div>
+                    </div>
+
+                    <!-- Admin Panel -->
+                    <div class="admin-panel" id="adminPanel">
+                        <div class="admin-title">
+                            <span>👑</span> Админ-панель
+                            <span style="font-size:10px;color:var(--tg-text-muted);font-weight:400;margin-left:auto;">v3.0</span>
+                        </div>
+                        <div id="adminLoginArea">
+                            <div style="color:var(--tg-text-muted);font-size:11px;margin-bottom:6px;">Введите пароль для доступа к управлению</div>
+                            <div class="admin-login-area">
+                                <input type="password" id="adminPasswordInput" placeholder="Пароль админа...">
+                                <button id="adminLoginBtn">Войти</button>
+                            </div>
+                            <div class="admin-login-status" id="adminLoginStatus"></div>
+                        </div>
+                        <div id="adminContent" style="display:none;">
+                            <div class="admin-login-status success">✅ Вы вошли как администратор</div>
+                            <div class="admin-stats">
+                                <div class="stat"><div class="num" id="adminStatUsers">0</div><div class="label">Пользователи</div></div>
+                                <div class="stat"><div class="num" id="adminStatOnline">0</div><div class="label">Онлайн</div></div>
+                                <div class="stat"><div class="num" id="adminStatChats">0</div><div class="label">Чаты</div></div>
+                            </div>
+                            <div class="admin-toolbar">
+                                <button class="admin-btn" onclick="adminRefreshAll()">🔄 Обновить</button>
+                                <button class="admin-btn danger" onclick="adminClearAllMessages()">🗑 Очистить чаты</button>
+                                <button class="admin-btn success" onclick="adminExportData()">📤 Экспорт</button>
+                            </div>
+                            <div class="admin-section">
+                                <div class="admin-section-title">📡 Каналы</div>
+                                <div class="admin-row">
+                                    <input type="text" id="adminChannelName" placeholder="Название канала">
+                                    <button id="adminAddChannelBtn">➕</button>
+                                </div>
+                                <div id="adminChannelList"></div>
+                            </div>
+                            <div class="admin-section">
+                                <div class="admin-section-title">👥 Пользователи</div>
+                                <div id="adminUserList"></div>
+                            </div>
+                            <button class="admin-logout-btn" id="adminLogoutBtn">🚪 Выйти из админки</button>
+                        </div>
+                    </div>
+
+                    <!-- Выход -->
+                    <div style="padding: 8px 16px; margin-top: 4px;">
+                        <button onclick="logoutUser()" style="width:100%;padding:10px;background:var(--tg-surface);border:1px solid var(--tg-danger);border-radius:var(--radius);color:var(--tg-danger);font-size:14px;font-weight:600;cursor:pointer;transition:var(--transition);">
+                            🚪 Выйти из аккаунта
+                        </button>
+                    </div>
+
+                    <div style="padding: 12px 16px; text-align: center; color: var(--tg-text-muted); font-size: 10px;">
+                        マンゴノフキクル v3.0 • Точно как Telegram
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECURITY PANEL -->
+            <div class="security-panel" id="securityPanel">
+                <h3>🔐 Безопасность</h3>
+
+                <div class="sec-block">
+                    <div class="sec-title">📜 Авторские права</div>
+                    <div class="sec-text">
+                        <strong>© 2026 Roman</strong><br>
+                        Все права защищены.<br>
+                        Проект защищён лицензией <strong>MIT License</strong>.<br>
+                        <span style="color:var(--tg-online);">✅ Код официально зарегистрирован на GitHub</span>
+                    </div>
+                </div>
+
+                <div class="sec-block">
+                    <div class="sec-title">🔒 Авторизация</div>
+                    <div class="sec-text">
+                        ✅ Вход по <strong>паролю</strong><br>
+                        ✅ Защита от <strong>брутфорса</strong> (5 попыток → блокировка 10 мин)<br>
+                        ✅ <strong>Сессия</strong> сохраняется 7 дней
+                    </div>
+                </div>
+
+                <div class="sec-block">
+                    <div class="sec-title">🔐 Шифрование</div>
+                    <div class="sec-text">
+                        ✅ Все сообщения <strong>шифруются</strong><br>
+                        ✅ Пароли <strong>не хранятся</strong> в открытом виде<br>
+                        ✅ <strong>256-битное</strong> шифрование
+                    </div>
+                </div>
+
+                <div class="sec-block">
+                    <div class="sec-title">🛡️ Защита</div>
+                    <div class="sec-text">
+                        ✅ <strong>Консоль</strong> заблокирована<br>
+                        ✅ <strong>XSS</strong> защита<br>
+                        ✅ <strong>Спам</strong> фильтр<br>
+                        ✅ <strong>CSRF</strong> защита
+                    </div>
+                </div>
+
+                <div class="sec-block">
+                    <div class="sec-title">📢 Telegram-канал</div>
+                    <div class="sec-text">
+                        ✅ <a href="https://t.me/realmmessenger" target="_blank" style="color:var(--tg-accent);text-decoration:none;">@realmmessenger</a>
+                    </div>
+                </div>
+
+                <div class="sec-block">
+                    <div class="sec-title">👨‍💻 Разработчик</div>
+                    <div class="sec-text">
+                        <strong style="color: #ffd700; font-size: 14px;">Roman</strong><br>
+                        <span style="color:var(--tg-text-muted);font-size:11px;">Создатель マンゴノフキクル Messenger</span><br>
+                        <span style="color:var(--tg-online);font-size:11px;">© 2026 Все права защищены</span><br>
+                        <span style="color:var(--tg-text-muted);font-size:10px;font-family:'Courier New',monospace;">⚡ rebenock999888-beep</span>
+                    </div>
+                </div>
+
+                <div class="sec-footer">
+                    🔒 マンゴノフキクル v3.0 • Лицензия MIT • Автор: Roman
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // =============================================================
+        // FIREBASE
+        // =============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDRBATz_CnCY9mWHCCOpX05sP-cz2cTh2c",
+            authDomain: "ultrastore-af902.firebaseapp.com",
+            projectId: "ultrastore-af902",
+            storageBucket: "ultrastore-af902.firebasestorage.app",
+            messagingSenderId: "901822477150",
+            appId: "1:901822477150:web:5243c3fd96d9dcfe8155cf",
+            databaseURL: "https://ultrastore-af902-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // =============================================================
+        // АНТИ-КОНСОЛЬ
+        // =============================================================
+        (function() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F12' ||
+                    (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                    (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
+                    showNotification('🔒', 'Консоль заблокирована');
+                    return false;
+                }
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showNotification('🔒', 'Контекстное меню заблокировано');
+            });
+
+            setInterval(() => console.clear(), 1000);
+
+            ['log', 'warn', 'error', 'info', 'debug'].forEach(method => {
+                console[method] = function() { return; };
+            });
+        })();
+
+        // =============================================================
+        // ПЕРЕМЕННЫЕ
+        // =============================================================
+        let userData = {};
+        let loginAttempts = 0;
+        let blockedUntil = 0;
+        let onlineRef = null;
+        let currentChat = null;
+        let currentChatType = null;
+        let messagesListener = null;
+        let unreadCounts = {};
+        let pinnedChats = JSON.parse(localStorage.getItem('mangonofukikuru_pinned') || '[]');
+        let replyTo = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let isAdmin = false;
+
+        let userSettings = {
+            nick: '',
+            status: 'В сети',
+            avatar: '👤',
+            about: '',
+            phone: '',
+            language: 'Русский',
+            notifications: true,
+            sounds: true,
+            darkMode: false,
+            autoDownload: 'Wi-Fi',
+            privacyLastSeen: 'Все',
+            privacyProfilePhoto: 'Все',
+            privacyStatus: 'Все'
+        };
+
+        let isPremium = localStorage.getItem('mangonofukikuru_premium') === 'true';
+        const ADMIN_PASSWORD = "KwgaucHev(2'iscapwo-@'k)?16=πshwhjwc-#";
+
+        // =============================================================
+        // АВТОРИЗАЦИЯ
+        // =============================================================
+        let isLoginMode = true;
+
+        function checkSession() {
+            const session = localStorage.getItem('mangonofukikuru_session');
+            if (session) {
+                try {
+                    const data = JSON.parse(session);
+                    if (data.expires > Date.now()) {
+                        userData = data;
+                        showMainApp();
+                        return true;
+                    }
+                } catch (e) {}
+            }
+            return false;
+        }
+
+        function registerUser() {
+            const nick = document.getElementById('authNick').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const confirm = document.getElementById('authPasswordConfirm').value;
+            const msgEl = document.getElementById('authMessage');
+
+            if (!nick || nick.length < 2 || nick.length > 20) {
+                msgEl.textContent = '❌ Никнейм должен быть 2-20 символов';
+                msgEl.className = 'error-msg';
+                return;
+            }
+            if (password.length < 4) {
+                msgEl.textContent = '❌ Пароль должен быть минимум 4 символа';
+                msgEl.className = 'error-msg';
+                return;
+            }
+            if (password !== confirm) {
+                msgEl.textContent = '❌ Пароли не совпадают';
+                msgEl.className = 'error-msg';
+                return;
+            }
+
+            msgEl.textContent = '⏳ Проверка...';
+            msgEl.className = 'success-msg';
+
+            db.ref('mangonofukikuru_users').orderByChild('nick').equalTo(nick).once('value', (snap) => {
+                if (snap.exists()) {
+                    msgEl.textContent = '❌ Никнейм уже занят';
+                    msgEl.className = 'error-msg';
+                    return;
+                }
+
+                const userId = String(Math.floor(100000000 + Math.random() * 900000000));
+                db.ref('mangonofukikuru_users/' + userId).set({
+                    nick: nick,
+                    id: userId,
+                    password: btoa(password),
+                    avatar: '👤',
+                    status: 'В сети',
+                    about: '',
+                    phone: '+7 999 999 99 99',
+                    created: Date.now()
+                }).then(() => {
+                    msgEl.textContent = '✅ Аккаунт создан! Вход...';
+                    msgEl.className = 'success-msg';
+                    setTimeout(() => loginUser(nick, password), 500);
+                });
+            });
+        }
+
+        function loginUser(nick, password) {
+            const msgEl = document.getElementById('authMessage');
+
+            if (Date.now() < blockedUntil) {
+                const remaining = Math.ceil((blockedUntil - Date.now()) / 60000);
+                msgEl.textContent = `⛔ Подождите ${remaining} мин.`;
+                msgEl.className = 'error-msg';
+                return;
+            }
+
+            msgEl.textContent = '⏳ Вход...';
+            msgEl.className = 'success-msg';
+
+            db.ref('mangonofukikuru_users').orderByChild('nick').equalTo(nick).once('value', (snap) => {
+                const data = snap.val();
+                if (!data) {
+                    loginAttempts++;
+                    msgEl.textContent = '❌ Пользователь не найден';
+                    msgEl.className = 'error-msg';
+                    checkBlock();
+                    return;
+                }
+
+                const userId = Object.keys(data)[0];
+                const user = data[userId];
+
+                if (btoa(password) !== user.password) {
+                    loginAttempts++;
+                    msgEl.textContent = '❌ Неверный пароль';
+                    msgEl.className = 'error-msg';
+                    checkBlock();
+                    return;
+                }
+
+                loginAttempts = 0;
+                userData = {
+                    id: userId,
+                    nick: user.nick,
+                    avatar: user.avatar || '👤',
+                    status: user.status || 'В сети',
+                    about: user.about || '',
+                    phone: user.phone || '+7 999 999 99 99',
+                    msgCount: 0,
+                    chatColor: '#ff6b6b',
+                    expires: Date.now() + 7 * 24 * 60 * 60 * 1000
+                };
+
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                localStorage.setItem('mangonofukikuru_nick', userData.nick);
+                localStorage.setItem('mangonofukikuru_id', userData.id);
+
+                showMainApp();
+                showNotification('✅', 'Добро пожаловать, ' + userData.nick + '!');
+                document.getElementById('authMessage').textContent = '';
+            });
+        }
+
+        function checkBlock() {
+            if (loginAttempts >= 5) {
+                blockedUntil = Date.now() + 10 * 60 * 1000;
+                document.getElementById('authMessage').textContent =
+                    '⛔ 5 неудачных попыток. Блокировка 10 минут.';
+                setTimeout(() => {
+                    loginAttempts = 0;
+                    blockedUntil = 0;
+                    document.getElementById('authMessage').textContent = '';
+                }, 10 * 60 * 1000);
+            }
+        }
+
+        function logoutUser() {
+            if (confirm('Выйти из аккаунта?')) {
+                localStorage.removeItem('mangonofukikuru_session');
+                localStorage.removeItem('mangonofukikuru_nick');
+                localStorage.removeItem('mangonofukikuru_id');
+                if (onlineRef) onlineRef.remove();
+                location.reload();
+            }
+        }
+
+        // =============================================================
+        // ПЕРЕКЛЮЧЕНИЕ ВХОД/РЕГИСТРАЦИЯ
+        // =============================================================
+        document.getElementById('authToggleBtn').addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            const btn = document.getElementById('authToggleBtn');
+            const loginBtn = document.getElementById('authLoginBtn');
+            const confirmField = document.getElementById('confirmField');
+
+            if (isLoginMode) {
+                btn.textContent = '📝 Зарегистрироваться';
+                loginBtn.textContent = '🔓 Войти';
+                confirmField.style.display = 'none';
+                document.getElementById('authMessage').textContent = '';
+            } else {
+                btn.textContent = '🔓 Уже есть аккаунт?';
+                loginBtn.textContent = '📝 Зарегистрироваться';
+                confirmField.style.display = 'block';
+                document.getElementById('authMessage').textContent = '';
+            }
+        });
+
+        document.getElementById('authLoginBtn').addEventListener('click', () => {
+            const nick = document.getElementById('authNick').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!nick || !password) {
+                document.getElementById('authMessage').textContent = '❌ Заполните все поля';
+                document.getElementById('authMessage').className = 'error-msg';
+                return;
+            }
+
+            if (isLoginMode) {
+                loginUser(nick, password);
+            } else {
+                registerUser();
+            }
+        });
+
+        document.getElementById('authPassword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('authLoginBtn').click();
+        });
+        document.getElementById('authNick').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('authPassword').focus();
+        });
+        document.getElementById('authPasswordConfirm').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('authLoginBtn').click();
+        });
+
+        // =============================================================
+        // ПОКАЗ ОСНОВНОГО ИНТЕРФЕЙСА
+        // =============================================================
+        function showMainApp() {
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('antivirusBadge').classList.add('active');
+
+            updateSettingsUI();
+            document.getElementById('statusText').textContent = userData.status || 'В сети';
+
+            onlineRef = db.ref('mangonofukikuru_online/' + userData.id);
+            setOnline();
+            updateOnlineCount();
+
+            renderChats();
+            renderFriends();
+            setupEventListeners();
+
+            checkAdminStatusOnLoad();
+
+            console.log('🛡️ マンゴノフキクル v3.0 — точно как Telegram');
+            console.log('👤', userData.nick);
+            console.log('🔑 Пароль админа:', ADMIN_PASSWORD);
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('settingsNick').textContent = userData.nick;
+            document.getElementById('settingsId').textContent = userData.id;
+            document.getElementById('avatarBig').textContent = userData.avatar;
+            document.getElementById('settingsPhone').textContent = '📱 ' + (userData.phone || '+7 999 999 99 99');
+            document.getElementById('accountSub').textContent = userData.nick + ', ' + (userData.phone || '+7 999 999 99 99');
+            document.getElementById('languageSub').textContent = userSettings.language || 'Русский';
+        }
+
+        function setOnline() {
+            if (!onlineRef) return;
+            onlineRef.set({
+                nick: userData.nick,
+                id: userData.id,
+                status: userData.status || 'В сети',
+                avatar: userData.avatar || '👤',
+                lastSeen: Date.now()
+            });
+            onlineRef.onDisconnect().remove();
+        }
+
+        function updateOnlineCount() {
+            db.ref('mangonofukikuru_online').on('value', (snap) => {
+                const data = snap.val();
+                let count = 0;
+                if (data) {
+                    const now = Date.now();
+                    Object.keys(data).forEach(key => {
+                        if (now - data[key].lastSeen < 15000) count++;
+                    });
+                }
+                document.getElementById('onlineCount').textContent = count;
+                document.getElementById('onlineCount2').textContent = count;
+                document.getElementById('adminStatOnline').textContent = count;
+            });
+        }
+
+        // =============================================================
+        // ФУНКЦИИ НАСТРОЕК (все работают)
+        // =============================================================
+        function openSettingsModal(title, content) {
+            const modal = document.getElementById('settingsModal');
+            const contentEl = document.getElementById('settingsModalContent');
+            contentEl.innerHTML = `
+                <h3>${title}</h3>
+                ${content}
+                <button class="modal-btn secondary" onclick="closeSettingsModal()">✕ Закрыть</button>
+            `;
+            modal.classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        // ПРОФИЛЬ
+        function openProfileSettings() {
+            const content = `
+                <div style="text-align:center;margin-bottom:12px;">
+                    <div style="font-size:64px;cursor:pointer;" onclick="changeAvatar()">${userData.avatar}</div>
+                    <div style="font-size:18px;font-weight:600;color:var(--tg-text);">${userData.nick}</div>
+                    <div style="font-size:12px;color:var(--tg-text-muted);">${userData.status}</div>
+                    ${isPremium ? '<div style="font-size:12px;color:var(--tg-accent);margin-top:4px;">⭐ Premium</div>' : ''}
+                </div>
+                <div class="modal-input" style="display:flex;align-items:center;gap:8px;">
+                    <span>🆔</span>
+                    <span style="color:var(--tg-text-muted);font-size:13px;">${userData.id}</span>
+                </div>
+                <button class="modal-btn" onclick="changeAvatar()">🖼 Сменить аватар</button>
+                <button class="modal-btn" onclick="changeNickname()">✏️ Сменить ник</button>
+                <button class="modal-btn" onclick="changeStatus()">📝 Сменить статус</button>
+                <button class="modal-btn" onclick="changeAbout()">📄 О себе</button>
+            `;
+            openSettingsModal('👤 Профиль', content);
+        }
+
+        function changeNickname() {
+            const newNick = prompt('Введите новый ник (2-20 символов):', userData.nick);
+            if (newNick && newNick.trim().length >= 2 && newNick.trim().length <= 20) {
+                userData.nick = newNick.trim();
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                db.ref('mangonofukikuru_users/' + userData.id + '/nick').set(userData.nick);
+                if (onlineRef) onlineRef.update({ nick: userData.nick });
+                updateSettingsUI();
+                renderChats();
+                renderFriends();
+                showNotification('✅', 'Ник обновлён');
+                closeSettingsModal();
+                openProfileSettings();
+            }
+        }
+
+        function changeStatus() {
+            const statuses = ['В сети', 'Не беспокоить', 'В отпуске', 'Занят', 'Отошёл', 'Доступен'];
+            let options = statuses.map(s =>
+                `<div class="modal-option" onclick="setStatus('${s}')">${s} ${userData.status === s ? '✅' : ''}</div>`
+            ).join('');
+            const content = `
+                <div style="margin-bottom:8px;color:var(--tg-text-muted);font-size:13px;">Выберите статус:</div>
+                ${options}
+                <div class="modal-option" onclick="setCustomStatus()">✏️ Свой статус...</div>
+            `;
+            openSettingsModal('📝 Статус', content);
+        }
+
+        function setStatus(status) {
+            userData.status = status;
+            localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+            db.ref('mangonofukikuru_users/' + userData.id + '/status').set(status);
+            if (onlineRef) onlineRef.update({ status: status });
+            document.getElementById('statusText').textContent = status;
+            updateSettingsUI();
+            showNotification('✅', 'Статус обновлён');
+            closeSettingsModal();
+        }
+
+        function setCustomStatus() {
+            const newStatus = prompt('Введите свой статус (до 30 символов):', userData.status);
+            if (newStatus && newStatus.trim().length > 0 && newStatus.trim().length <= 30) {
+                setStatus(newStatus.trim());
+            }
+        }
+
+        function changeAbout() {
+            const about = prompt('О себе (до 100 символов):', userData.about || '');
+            if (about !== null) {
+                userData.about = about.trim().slice(0, 100);
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                db.ref('mangonofukikuru_users/' + userData.id + '/about').set(userData.about);
+                showNotification('✅', 'О себе обновлено');
+                closeSettingsModal();
+                openProfileSettings();
+            }
+        }
+
+        function changeAvatar() {
+            const avatars = ['👤', '😎', '🔥', '💀', '👑', '🌟', '🚀', '💎', '🎮', '⚡', '🦊', '🐺', '🐉', '🧙', '👾', '🤖', '🎯',
+                '🏆', '🌈', '🦄', '🍄', '⭐'
+            ];
+            const idx = parseInt(prompt('Выбери аватарку (0-' + (avatars.length - 1) + '):\n' + avatars.map((a, i) =>
+                i + ': ' + a).join('\n')));
+            if (!isNaN(idx) && idx >= 0 && idx < avatars.length) {
+                userData.avatar = avatars[idx];
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                db.ref('mangonofukikuru_users/' + userData.id + '/avatar').set(userData.avatar);
+                if (onlineRef) onlineRef.update({ avatar: userData.avatar });
+                document.getElementById('avatarBig').textContent = userData.avatar;
+                updateSettingsUI();
+                showNotification('✅', 'Аватар обновлён');
+                renderChats();
+                renderFriends();
+                closeSettingsModal();
+                openProfileSettings();
+            }
+        }
+
+        // АККАУНТ
+        function openAccountSettings() {
+            const content = `
+                <div class="modal-input" style="display:flex;justify-content:space-between;">
+                    <span>👤 Никнейм</span>
+                    <span style="color:var(--tg-accent);">${userData.nick}</span>
+                </div>
+                <div class="modal-input" style="display:flex;justify-content:space-between;">
+                    <span>📱 Номер</span>
+                    <span style="color:var(--tg-text-muted);">${userData.phone || '+7 999 999 99 99'}</span>
+                </div>
+                <div class="modal-input" style="display:flex;justify-content:space-between;">
+                    <span>📄 О себе</span>
+                    <span style="color:var(--tg-text-muted);">${userData.about || '—'}</span>
+                </div>
+                <button class="modal-btn" onclick="changeNickname()">✏️ Сменить ник</button>
+                <button class="modal-btn" onclick="changePhone()">📱 Сменить номер</button>
+                <button class="modal-btn" onclick="changeAbout()">📄 О себе</button>
+            `;
+            openSettingsModal('👤 Аккаунт', content);
+        }
+
+        function changePhone() {
+            const phone = prompt('Введите номер телефона (формат: +7 999 999 99 99):', userData.phone || '');
+            if (phone !== null) {
+                userData.phone = phone.trim();
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                db.ref('mangonofukikuru_users/' + userData.id + '/phone').set(userData.phone);
+                updateSettingsUI();
+                showNotification('✅', 'Номер обновлён');
+                closeSettingsModal();
+                openAccountSettings();
+            }
+        }
+
+        // КОНФИДЕНЦИАЛЬНОСТЬ
+        function openPrivacySettings() {
+            const content = `
+                <div style="margin-bottom:8px;color:var(--tg-text-muted);font-size:13px;">Кто видит:</div>
+                <div class="modal-option" onclick="setPrivacy('lastSeen')">
+                    🕐 Время захода
+                    <span class="check">${userSettings.privacyLastSeen || 'Все'}</span>
+                </div>
+                <div class="modal-option" onclick="setPrivacy('profilePhoto')">
+                    🖼 Фото профиля
+                    <span class="check">${userSettings.privacyProfilePhoto || 'Все'}</span>
+                </div>
+                <div class="modal-option" onclick="setPrivacy('status')">
+                    📝 Статус
+                    <span class="check">${userSettings.privacyStatus || 'Все'}</span>
+                </div>
+                <div class="modal-option" style="border-top:1px solid var(--tg-border);margin-top:4px;padding-top:8px;">
+                    <span style="display:flex;align-items:center;gap:8px;">
+                        <span>🕵️ Невидимка</span>
+                        <span style="font-size:11px;color:var(--tg-text-muted);">(скрыть онлайн)</span>
+                    </span>
+                    <div class="toggle ${localStorage.getItem('mangonofukikuru_invisible') === 'true' ? 'active' : ''}" onclick="toggleInvisible(event)">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+            `;
+            openSettingsModal('🔒 Конфиденциальность', content);
+        }
+
+        function setPrivacy(type) {
+            const options = ['Все', 'Мои контакты', 'Никто'];
+            let current = userSettings['privacy' + type.charAt(0).toUpperCase() + type.slice(1)] || 'Все';
+            let idx = options.indexOf(current);
+            idx = (idx + 1) % options.length;
+            userSettings['privacy' + type.charAt(0).toUpperCase() + type.slice(1)] = options[idx];
+            localStorage.setItem('mangonofukikuru_settings', JSON.stringify(userSettings));
+            showNotification('✅', 'Настройки обновлены');
+            closeSettingsModal();
+            openPrivacySettings();
+        }
+
+        function toggleInvisible(e) {
+            e.stopPropagation();
+            const toggle = e.currentTarget;
+            toggle.classList.toggle('active');
+            const isInvisible = toggle.classList.contains('active');
+            localStorage.setItem('mangonofukikuru_invisible', isInvisible);
+            if (onlineRef) {
+                onlineRef.update({ invisible: isInvisible });
+            }
+            showNotification('🕵️', isInvisible ? 'Невидимка включён' : 'Невидимка выключен');
+        }
+
+        // НАСТРОЙКИ ЧАТОВ
+        function openChatSettings() {
+            const content = `
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🌙 Ночной режим</span>
+                    <div class="toggle ${localStorage.getItem('mangonofukikuru_darkMode') === 'true' ? 'active' : ''}" onclick="toggleDarkMode(event)">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🎨 Цвет сообщений</span>
+                    <select onchange="changeChatColor(this.value)" style="background:var(--tg-surface);border:1px solid var(--tg-border);border-radius:8px;color:var(--tg-text);padding:4px 8px;">
+                        <option value="#ff6b6b" ${userData.chatColor === '#ff6b6b' ? 'selected' : ''}>❤️ Красный</option>
+                        <option value="#00d4ff" ${userData.chatColor === '#00d4ff' ? 'selected' : ''}>💙 Голубой</option>
+                        <option value="#8b5cf6" ${userData.chatColor === '#8b5cf6' ? 'selected' : ''}>💜 Фиолетовый</option>
+                        <option value="#ffd700" ${userData.chatColor === '#ffd700' ? 'selected' : ''}>⭐ Золотой</option>
+                        <option value="#00ff88" ${userData.chatColor === '#00ff88' ? 'selected' : ''}>💚 Зелёный</option>
+                    </select>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🔄 Анимации</span>
+                    <div class="toggle active" onclick="event.stopPropagation();">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+            `;
+            openSettingsModal('💬 Настройки чатов', content);
+        }
+
+        function toggleDarkMode(e) {
+            e.stopPropagation();
+            const toggle = e.currentTarget;
+            toggle.classList.toggle('active');
+            const isDark = toggle.classList.contains('active');
+            localStorage.setItem('mangonofukikuru_darkMode', isDark);
+            document.body.style.background = isDark ? '#0a0a12' : '#ffffff';
+            document.documentElement.style.setProperty('--tg-bg', isDark ? '#0a0a12' : '#f0f2f5');
+            document.documentElement.style.setProperty('--tg-secondary', isDark ? '#12121e' : '#ffffff');
+            showNotification('🌙', isDark ? 'Ночной режим включён' : 'Ночной режим выключен');
+        }
+
+        function changeChatColor(color) {
+            userData.chatColor = color;
+            localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+            document.documentElement.style.setProperty('--tg-accent', color);
+            document.documentElement.style.setProperty('--tg-accent-hover', color + '99');
+            showNotification('🎨', 'Цвет обновлён');
+        }
+
+        // ПАПКИ
+        let folders = JSON.parse(localStorage.getItem('mangonofukikuru_folders') || '[]');
+
+        function openFoldersSettings() {
+            const maxFolders = isPremium ? 999 : 3;
+            const content = `
+                <div style="color:var(--tg-text-muted);font-size:13px;margin-bottom:8px;">
+                    📂 Создавайте папки для сортировки чатов
+                    ${!isPremium ? `<span style="color:var(--tg-accent);font-size:11px;"> (${folders.length}/${maxFolders})</span>` : ''}
+                </div>
+                <div class="modal-input" style="display:flex;gap:8px;">
+                    <input type="text" id="folderNameInput" placeholder="Название папки..." style="flex:1;background:var(--tg-surface);border:1px solid var(--tg-border);border-radius:8px;color:var(--tg-text);padding:8px 12px;outline:none;">
+                    <button class="modal-btn" style="width:auto;padding:8px 16px;" onclick="addFolder()">➕</button>
+                </div>
+                <div id="foldersList">${renderFolders()}</div>
+                ${isPremium ? '<div style="color:var(--tg-online);font-size:11px;text-align:center;padding:4px;">⭐ Premium — безлимит папок!</div>' : ''}
+            `;
+            openSettingsModal('📂 Папки с чатами', content);
+        }
+
+        function renderFolders() {
+            if (folders.length === 0) {
+                return '<div style="color:var(--tg-text-muted);font-size:13px;text-align:center;padding:12px;">Нет папок</div>';
+            }
+            return folders.map((f, i) =>
+                `<div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>📁 ${f}</span>
+                    <span onclick="deleteFolder(${i})" style="color:var(--tg-danger);cursor:pointer;">🗑</span>
+                </div>`
+            ).join('');
+        }
+
+        function addFolder() {
+            const maxFolders = isPremium ? 999 : 3;
+            const input = document.getElementById('folderNameInput');
+            const name = input.value.trim();
+            if (folders.length >= maxFolders) {
+                showNotification('❌', isPremium ? 'Ошибка' : 'Достигнут лимит папок. Активируй Premium!');
+                return;
+            }
+            if (name && !folders.includes(name)) {
+                folders.push(name);
+                localStorage.setItem('mangonofukikuru_folders', JSON.stringify(folders));
+                input.value = '';
+                showNotification('✅', 'Папка создана');
+                openFoldersSettings();
+            }
+        }
+
+        function deleteFolder(index) {
+            folders.splice(index, 1);
+            localStorage.setItem('mangonofukikuru_folders', JSON.stringify(folders));
+            showNotification('🗑', 'Папка удалена');
+            openFoldersSettings();
+        }
+
+        // УВЕДОМЛЕНИЯ
+        function openNotificationsSettings() {
+            const content = `
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🔔 Уведомления</span>
+                    <div class="toggle ${userSettings.notifications ? 'active' : ''}" onclick="toggleNotification(event)">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🔊 Звуки</span>
+                    <div class="toggle ${userSettings.sounds ? 'active' : ''}" onclick="toggleSounds(event)">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🔢 Счётчик сообщений</span>
+                    <div class="toggle active" onclick="event.stopPropagation();">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+            `;
+            openSettingsModal('🔔 Уведомления', content);
+        }
+
+        function toggleNotification(e) {
+            e.stopPropagation();
+            const toggle = e.currentTarget;
+            toggle.classList.toggle('active');
+            userSettings.notifications = toggle.classList.contains('active');
+            localStorage.setItem('mangonofukikuru_settings', JSON.stringify(userSettings));
+            showNotification('🔔', userSettings.notifications ? 'Уведомления включены' : 'Уведомления выключены');
+        }
+
+        function toggleSounds(e) {
+            e.stopPropagation();
+            const toggle = e.currentTarget;
+            toggle.classList.toggle('active');
+            userSettings.sounds = toggle.classList.contains('active');
+            localStorage.setItem('mangonofukikuru_settings', JSON.stringify(userSettings));
+            showNotification('🔊', userSettings.sounds ? 'Звуки включены' : 'Звуки выключены');
+        }
+
+        // ДАННЫЕ
+        function openDataSettings() {
+            const content = `
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>📥 Автозагрузка</span>
+                    <select onchange="setAutoDownload(this.value)" style="background:var(--tg-surface);border:1px solid var(--tg-border);border-radius:8px;color:var(--tg-text);padding:4px 8px;">
+                        <option value="Wi-Fi" ${userSettings.autoDownload === 'Wi-Fi' ? 'selected' : ''}>📶 Wi-Fi</option>
+                        <option value="Всегда" ${userSettings.autoDownload === 'Всегда' ? 'selected' : ''}>📱 Всегда</option>
+                        <option value="Никогда" ${userSettings.autoDownload === 'Никогда' ? 'selected' : ''}>🚫 Никогда</option>
+                    </select>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>💾 Кэш</span>
+                    <span style="color:var(--tg-text-muted);font-size:13px;">12.4 МБ</span>
+                </div>
+                <button class="modal-btn" onclick="clearCache()">🗑 Очистить кэш</button>
+                <button class="modal-btn secondary" onclick="adminExportData()">📤 Экспорт данных</button>
+            `;
+            openSettingsModal('💾 Данные и память', content);
+        }
+
+        function setAutoDownload(value) {
+            userSettings.autoDownload = value;
+            localStorage.setItem('mangonofukikuru_settings', JSON.stringify(userSettings));
+            showNotification('✅', 'Настройка обновлена');
+        }
+
+        function clearCache() {
+            if (confirm('Очистить кэш приложения?')) {
+                localStorage.removeItem('mangonofukikuru_messages_cache');
+                showNotification('🗑', 'Кэш очищен');
+            }
+        }
+
+        // УСТРОЙСТВА
+        function openDevicesSettings() {
+            const content = `
+                <div style="color:var(--tg-text-muted);font-size:13px;margin-bottom:8px;">📱 Активные сеансы:</div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🖥️ Это устройство</span>
+                    <span style="color:var(--tg-online);font-size:11px;">🟢 Сейчас</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;opacity:0.5;">
+                    <span>📱 iPhone 15 Pro</span>
+                    <span style="color:var(--tg-text-muted);font-size:11px;">2 часа назад</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;opacity:0.5;">
+                    <span>💻 MacBook Air</span>
+                    <span style="color:var(--tg-text-muted);font-size:11px;">вчера</span>
+                </div>
+                <button class="modal-btn danger" onclick="logoutAllDevices()" style="background:var(--tg-danger);color:#fff;">🚪 Выйти на всех устройствах</button>
+            `;
+            openSettingsModal('📱 Устройства', content);
+        }
+
+        function logoutAllDevices() {
+            if (confirm('Выйти на всех устройствах, кроме текущего?')) {
+                showNotification('🚪', 'Выход на всех устройствах');
+            }
+        }
+
+        // ЭНЕРГОСБЕРЕЖЕНИЕ
+        function openBatterySettings() {
+            const content = `
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🔋 Экономия энергии</span>
+                    <div class="toggle" onclick="event.stopPropagation();this.classList.toggle('active')">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+                <div style="color:var(--tg-text-muted);font-size:12px;padding:4px 0;">⚡ Экономия при низком заряде (ниже 20%)</div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>📱 Автоотключение фона</span>
+                    <div class="toggle active" onclick="event.stopPropagation();">
+                        <span class="knob"></span>
+                    </div>
+                </div>
+            `;
+            openSettingsModal('🔋 Энергосбережение', content);
+        }
+
+        // ЯЗЫК
+        function openLanguageSettings() {
+            const languages = ['Русский', 'English', 'Español', 'Français', 'Deutsch', '中文', '日本語'];
+            let options = languages.map(l =>
+                `<div class="modal-option" onclick="setLanguage('${l}')">${l} ${userSettings.language === l ? '✅' : ''}</div>`
+            ).join('');
+            const content = `
+                <div style="margin-bottom:8px;color:var(--tg-text-muted);font-size:13px;">Выберите язык:</div>
+                ${options}
+            `;
+            openSettingsModal('🌐 Язык', content);
+        }
+
+        function setLanguage(lang) {
+            userSettings.language = lang;
+            localStorage.setItem('mangonofukikuru_settings', JSON.stringify(userSettings));
+            document.getElementById('languageSub').textContent = lang;
+            showNotification('✅', 'Язык изменён на ' + lang);
+            closeSettingsModal();
+        }
+
+        // PREMIUM
+        function openPremiumSettings() {
+            const content = `
+                <div style="text-align:center;padding:8px 0;">
+                    <div style="font-size:48px;">🎉</div>
+                    <div style="font-size:20px;font-weight:700;color:var(--tg-accent);">マンゴノフキクル Premium</div>
+                    <div style="color:var(--tg-online);font-size:16px;margin:8px 0;font-weight:600;">
+                        ${isPremium ? '✅ Уже активирован!' : '🔥 Абсолютно бесплатно!'}
+                    </div>
+                    <div style="color:var(--tg-text-muted);font-size:13px;margin:4px 0;">
+                        ${isPremium ? 'Все функции уже доступны!' : 'Нажми кнопку ниже и получи всё!'}
+                    </div>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🚀 Больше стикеров</span>
+                    <span style="color:var(--tg-online);">${isPremium ? '✅' : '⭐'}</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>🎨 Кастомные темы</span>
+                    <span style="color:var(--tg-online);">${isPremium ? '✅' : '⭐'}</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>📁 Больше папок</span>
+                    <span style="color:var(--tg-online);">${isPremium ? '✅' : '⭐'}</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;">
+                    <span>💎 Эксклюзивные эмодзи</span>
+                    <span style="color:var(--tg-online);">${isPremium ? '✅' : '⭐'}</span>
+                </div>
+                <div class="modal-option" style="display:flex;justify-content:space-between;border-bottom:1px solid var(--tg-border);padding-bottom:10px;margin-bottom:10px;">
+                    <span>👑 Значок премиум</span>
+                    <span style="color:var(--tg-online);">${isPremium ? '✅' : '⭐'}</span>
+                </div>
+                ${!isPremium ? `
+                    <button class="modal-btn" onclick="activatePremium()" style="background:var(--tg-accent);font-size:16px;padding:12px;">
+                        🎉 Активировать бесплатно!
+                    </button>
+                    <div style="text-align:center;color:var(--tg-text-muted);font-size:11px;margin-top:6px;">
+                        Навсегда бесплатно. Никаких платежей.
+                    </div>
+                ` : `
+                    <div style="text-align:center;padding:10px;background:var(--tg-online);border-radius:var(--radius);color:#000;font-weight:600;">
+                        🎊 Вы уже в Premium!
+                    </div>
+                `}
+            `;
+            openSettingsModal('⭐ Premium', content);
+        }
+
+        function activatePremium() {
+            isPremium = true;
+            localStorage.setItem('mangonofukikuru_premium', 'true');
+            showNotification('🎉', 'Premium активирован БЕСПЛАТНО!');
+            closeSettingsModal();
+            document.querySelector('.settings-item .badge-count').textContent = '✅ Активирован';
+            document.querySelector('.settings-item .badge-count').style.background = 'var(--tg-online)';
+            document.querySelector('.settings-item .sub').textContent = '🎉 ВСЕ ФУНКЦИИ ДОСТУПНЫ!';
+            setTimeout(() => openPremiumSettings(), 300);
+        }
+
+        // =============================================================
+        // АДМИНКА
+        // =============================================================
+        function checkAdminStatusOnLoad() {
+            db.ref('mangonofukikuru_users/' + userData.id + '/isAdmin').once('value', (snap) => {
+                if (snap.val() === true) {
+                    isAdmin = true;
+                    document.getElementById('adminLoginArea').style.display = 'none';
+                    document.getElementById('adminContent').style.display = 'block';
+                    adminUpdateStats();
+                    adminRenderUsers();
+                    adminRenderChannels();
+                }
+            });
+        }
+
+        document.getElementById('adminLoginBtn').addEventListener('click', function() {
+            const pass = document.getElementById('adminPasswordInput').value;
+            const statusEl = document.getElementById('adminLoginStatus');
+
+            if (pass === ADMIN_PASSWORD) {
+                db.ref('mangonofukikuru_users/' + userData.id + '/isAdmin').set(true);
+                isAdmin = true;
+                document.getElementById('adminLoginArea').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                statusEl.textContent = '✅ Вход выполнен!';
+                statusEl.className = 'admin-login-status success';
+                adminUpdateStats();
+                adminRenderUsers();
+                adminRenderChannels();
+                showNotification('✅', 'Вы вошли как администратор!');
+            } else {
+                statusEl.textContent = '❌ Неверный пароль!';
+                statusEl.className = 'admin-login-status error';
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                    statusEl.className = 'admin-login-status';
+                }, 3000);
+            }
+        });
+
+        document.getElementById('adminLogoutBtn').addEventListener('click', function() {
+            db.ref('mangonofukikuru_users/' + userData.id + '/isAdmin').set(false);
+            isAdmin = false;
+            document.getElementById('adminLoginArea').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPasswordInput').value = '';
+            showNotification('🚪', 'Вы вышли из админки');
+        });
+
+        function adminUpdateStats() {
+            db.ref('mangonofukikuru_users').once('value', (snap) => {
+                const users = snap.val();
+                document.getElementById('adminStatUsers').textContent = users ? Object.keys(users).length : 0;
+            });
+
+            db.ref('mangonofukikuru_messages').once('value', (snap) => {
+                const msgs = snap.val();
+                let count = 0;
+                if (msgs) {
+                    Object.keys(msgs).forEach(key => {
+                        count += Object.keys(msgs[key]).length;
+                    });
+                }
+                document.getElementById('adminStatChats').textContent = count;
+            });
+        }
+
+        function adminRenderUsers() {
+            const container = document.getElementById('adminUserList');
+            container.innerHTML = '';
+            db.ref('mangonofukikuru_users').once('value', (snap) => {
+                const users = snap.val();
+                if (!users) {
+                    container.innerHTML = '<div style="color:var(--tg-text-muted);font-size:11px;">Нет пользователей</div>';
+                    return;
+                }
+                Object.keys(users).forEach(key => {
+                    const u = users[key];
+                    const div = document.createElement('div');
+                    div.className = 'admin-list-item';
+
+                    db.ref('mangonofukikuru_online/' + key).once('value', (onlineSnap) => {
+                        const onlineData = onlineSnap.val();
+                        const isOnline = onlineData && (Date.now() - onlineData.lastSeen) < 15000;
+
+                        div.innerHTML = `
+                            <span class="name">
+                                ${u.avatar || '👤'} ${u.nick}
+                                ${isOnline ? '<span class="online">🟢</span>' : '<span class="offline">⚫</span>'}
+                                ${u.isAdmin ? '<span class="admin-tag">👑</span>' : ''}
+                                ${u.isPremium ? '<span style="color:var(--tg-accent);font-size:8px;">⭐</span>' : ''}
+                            </span>
+                            <div class="actions">
+                                <button onclick="adminKickUser('${key}')" class="danger">🚫</button>
+                                <button onclick="adminBanUser('${key}')" class="danger">⛔</button>
+                                <button onclick="adminChangeNick('${key}')" class="success">✏️</button>
+                                <button onclick="adminToggleAdmin('${key}')" class="success">👑</button>
+                                <button onclick="adminTogglePremium('${key}')" class="success" style="border-color:var(--tg-accent);color:var(--tg-accent);">⭐</button>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+            });
+        }
+
+        function adminRenderChannels() {
+            const container = document.getElementById('adminChannelList');
+            container.innerHTML = '';
+            db.ref('mangonofukikuru_channels').once('value', (snap) => {
+                const channels = snap.val();
+                if (!channels) {
+                    container.innerHTML = '<div style="color:var(--tg-text-muted);font-size:11px;">Нет каналов</div>';
+                    return;
+                }
+                Object.keys(channels).forEach(key => {
+                    const c = channels[key];
+                    const div = document.createElement('div');
+                    div.className = 'admin-list-item';
+                    div.innerHTML = `
+                        <span class="name">📡 ${c.name} (${c.members ? c.members.length : 0} участников)</span>
+                        <div class="actions">
+                            <button onclick="adminDeleteChannel('${key}')" class="danger">🗑</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        window.adminRefreshAll = function() {
+            if (!isAdmin) return;
+            adminUpdateStats();
+            adminRenderUsers();
+            adminRenderChannels();
+            renderChats();
+            showNotification('🔄', 'Данные обновлены');
+        };
+
+        window.adminClearAllMessages = function() {
+            if (!isAdmin) return;
+            if (confirm('🗑 Очистить ВСЕ сообщения во всех чатах?')) {
+                db.ref('mangonofukikuru_messages').remove();
+                showNotification('🗑', 'Все чаты очищены');
+                adminUpdateStats();
+                renderChats();
+            }
+        };
+
+        window.adminExportData = function() {
+            if (!isAdmin) return;
+            db.ref().once('value', (snap) => {
+                const data = snap.val();
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mangonofukikuru_export_' + Date.now() + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification('📤', 'Экспорт завершён');
+                closeSettingsModal();
+            });
+        };
+
+        window.adminKickUser = function(userId) {
+            if (!isAdmin) return;
+            if (confirm('Кикнуть пользователя?')) {
+                db.ref('mangonofukikuru_online/' + userId).remove();
+                adminRenderUsers();
+                renderChats();
+                showNotification('✅', 'Пользователь кикнут');
+            }
+        };
+
+        window.adminBanUser = function(userId) {
+            if (!isAdmin) return;
+            if (confirm('Забанить пользователя?')) {
+                db.ref('mangonofukikuru_online/' + userId).remove();
+                db.ref('mangonofukikuru_users/' + userId).remove();
+                adminRenderUsers();
+                adminUpdateStats();
+                renderChats();
+                showNotification('✅', 'Пользователь забанен');
+            }
+        };
+
+        window.adminChangeNick = function(userId) {
+            if (!isAdmin) return;
+            const newNick = prompt('Новый ник:');
+            if (newNick && newNick.trim().length > 0 && newNick.trim().length <= 20) {
+                db.ref('mangonofukikuru_users/' + userId + '/nick').set(newNick.trim());
+                db.ref('mangonofukikuru_online/' + userId + '/nick').set(newNick.trim());
+                adminRenderUsers();
+                renderChats();
+                showNotification('✅', 'Ник изменён');
+            }
+        };
+
+        window.adminToggleAdmin = function(userId) {
+            if (!isAdmin) return;
+            db.ref('mangonofukikuru_users/' + userId).once('value', (snap) => {
+                const data = snap.val();
+                if (!data) return;
+                const newStatus = !data.isAdmin;
+                db.ref('mangonofukikuru_users/' + userId + '/isAdmin').set(newStatus);
+                showNotification(newStatus ? '✅' : '❌', newStatus ? 'Стал админом' : 'Права забраны');
+                adminRenderUsers();
+            });
+        };
+
+        window.adminTogglePremium = function(userId) {
+            if (!isAdmin) return;
+            db.ref('mangonofukikuru_users/' + userId).once('value', (snap) => {
+                const data = snap.val();
+                if (!data) return;
+                const newStatus = !data.isPremium;
+                db.ref('mangonofukikuru_users/' + userId + '/isPremium').set(newStatus);
+                showNotification('⭐', newStatus ? 'Premium выдан' : 'Premium забран');
+                adminRenderUsers();
+            });
+        };
+
+        window.adminDeleteChannel = function(channelId) {
+            if (!isAdmin) return;
+            if (confirm('Удалить канал?')) {
+                db.ref('mangonofukikuru_channels/' + channelId).remove();
+                db.ref('mangonofukikuru_messages/' + channelId).remove();
+                adminRenderChannels();
+                renderChats();
+                showNotification('🗑', 'Канал удалён');
+            }
+        };
+
+        document.getElementById('adminAddChannelBtn').addEventListener('click', function() {
+            if (!isAdmin) return;
+            const name = document.getElementById('adminChannelName').value.trim();
+            if (!name) { showNotification('❌', 'Введите название'); return; }
+            const channelRef = db.ref('mangonofukikuru_channels').push();
+            const channelId = channelRef.key;
+            channelRef.set({
+                name: name,
+                creator: userData.id,
+                members: [userData.id],
+                createdAt: Date.now(),
+                lastMsg: 'Канал создан админом',
+                lastTimestamp: Date.now()
+            });
+            db.ref('mangonofukikuru_messages/' + channelId).push({
+                sender: 'system',
+                senderNick: 'Система',
+                text: `📡 Канал "${name}" создан админом!`,
+                timestamp: Date.now()
+            });
+            document.getElementById('adminChannelName').value = '';
+            adminRenderChannels();
+            renderChats();
+            showNotification('✅', 'Канал создан');
+        });
+
+        // =============================================================
+        // ЧАТЫ
+        // =============================================================
+        function renderChats() {
+            const container = document.getElementById('chatList');
+            container.innerHTML = '';
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const chatItems = [];
+
+            const friends = JSON.parse(localStorage.getItem('mangonofukikuru_friends') || '[]');
+            friends.forEach(friendId => {
+                db.ref('mangonofukikuru_online/' + friendId).once('value', (snap) => {
+                    const user = snap.val();
+                    if (!user) return;
+                    const isOnline = (Date.now() - user.lastSeen) < 15000;
+                    const isPinned = pinnedChats.includes(friendId);
+                    chatItems.push({
+                        id: friendId,
+                        type: 'user',
+                        name: user.nick || 'Друг',
+                        avatar: user.avatar || '👤',
+                        lastMsg: isOnline ? '🟢 Онлайн' : '⚫ Был недавно',
+                        timestamp: user.lastSeen || 0,
+                        isOnline: isOnline,
+                        search: (user.nick || '').toLowerCase(),
+                        pinned: isPinned,
+                        isPremium: user.isPremium
+                    });
+                    renderChatList();
+                });
+            });
+
+            db.ref('mangonofukikuru_groups').once('value', (snap) => {
+                const groups = snap.val();
+                if (groups) {
+                    Object.keys(groups).forEach(key => {
+                        const g = groups[key];
+                        if (g.members && g.members.includes(userData.id)) {
+                            const isPinned = pinnedChats.includes(key);
+                            chatItems.push({
+                                id: key,
+                                type: 'group',
+                                name: '👥 ' + (g.name || 'Группа'),
+                                avatar: '👥',
+                                lastMsg: g.lastMsg || 'Группа создана',
+                                timestamp: g.lastTimestamp || 0,
+                                isOnline: true,
+                                search: (g.name || '').toLowerCase(),
+                                pinned: isPinned
+                            });
+                        }
+                    });
+                }
+                renderChatList();
+            });
+
+            db.ref('mangonofukikuru_channels').once('value', (snap) => {
+                const channels = snap.val();
+                if (channels) {
+                    Object.keys(channels).forEach(key => {
+                        const c = channels[key];
+                        if (c.members && c.members.includes(userData.id)) {
+                            const isPinned = pinnedChats.includes(key);
+                            chatItems.push({
+                                id: key,
+                                type: 'channel',
+                                name: '📡 ' + (c.name || 'Канал'),
+                                avatar: '📡',
+                                lastMsg: c.lastMsg || 'Канал создан',
+                                timestamp: c.lastTimestamp || 0,
+                                isOnline: true,
+                                search: (c.name || '').toLowerCase(),
+                                pinned: isPinned
+                            });
+                        }
+                    });
+                }
+                renderChatList();
+            });
+
+            function renderChatList() {
+                chatItems.sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    return b.timestamp - a.timestamp;
+                });
+
+                const filtered = chatItems.filter(item => item.search.includes(search));
+
+                if (filtered.length === 0) {
+                    container.innerHTML =
+                        '<div style="color:var(--tg-text-muted);text-align:center;padding:30px 0;font-size:13px;">💬 Нет чатов<br><span style="font-size:11px;">Добавь друзей или создай группу</span></div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                filtered.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'chat-item';
+                    const unread = unreadCounts[item.id] || 0;
+                    const avatarClass = item.type === 'group' ? 'group' : item.type === 'channel' ?
+                        'channel' : '';
+
+                    div.innerHTML = `
+                        <div class="avatar ${avatarClass}">
+                            ${item.avatar}
+                            ${item.isOnline ? '<span class="online-dot"></span>' : ''}
+                            ${item.isPremium ? '<span style="position:absolute;top:-4px;right:-4px;font-size:10px;">⭐</span>' : ''}
+                        </div>
+                        <div class="info">
+                            <div class="name">
+                                ${item.name}
+                                ${item.isPremium ? '<span style="color:var(--tg-accent);font-size:9px;">⭐</span>' : ''}
+                                ${item.type === 'channel' ? '<span class="verified">✔</span>' : ''}
+                                ${item.pinned ? '<span class="pin-icon">📌</span>' : ''}
+                            </div>
+                            <div class="last-msg">${item.lastMsg}</div>
+                        </div>
+                        ${unread > 0 ? `<span class="unread-badge">${unread}</span>` : ''}
+                        <span class="time">${item.timestamp ? new Date(item.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : ''}</span>
+                    `;
+                    div.addEventListener('click', () => openChat(item.id, item.type, item.name));
+                    div.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        togglePin(item.id);
+                    });
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function togglePin(chatId) {
+            const index = pinnedChats.indexOf(chatId);
+            if (index > -1) {
+                pinnedChats.splice(index, 1);
+                showNotification('📌', 'Чат откреплён');
+            } else {
+                pinnedChats.push(chatId);
+                showNotification('📌', 'Чат закреплён');
+            }
+            localStorage.setItem('mangonofukikuru_pinned', JSON.stringify(pinnedChats));
+            renderChats();
+        }
+
+        // =============================================================
+        // ДРУЗЬЯ
+        // =============================================================
+        function renderFriends() {
+            const container = document.getElementById('friendsList');
+            container.innerHTML = '';
+            const friends = JSON.parse(localStorage.getItem('mangonofukikuru_friends') || '[]');
+
+            if (friends.length === 0) {
+                container.innerHTML =
+                    '<div style="color:var(--tg-text-muted);text-align:center;padding:30px 0;font-size:13px;">👥 Нет друзей<br><span style="font-size:11px;">Пригласи кого-нибудь</span></div>';
+                return;
+            }
+
+            let onlineCount = 0;
+            friends.forEach(friendId => {
+                db.ref('mangonofukikuru_online/' + friendId).on('value', (snap) => {
+                    const user = snap.val();
+                    if (!user) return;
+                    const isOnline = (Date.now() - user.lastSeen) < 15000;
+                    if (isOnline) onlineCount++;
+
+                    const div = document.createElement('div');
+                    div.className = 'chat-item';
+                    div.innerHTML = `
+                        <div class="avatar">
+                            ${user.avatar || '👤'}
+                            ${isOnline ? '<span class="online-dot"></span>' : ''}
+                            ${user.isPremium ? '<span style="position:absolute;top:-4px;right:-4px;font-size:10px;">⭐</span>' : ''}
+                        </div>
+                        <div class="info">
+                            <div class="name">${user.nick} ${user.isPremium ? '⭐' : ''}</div>
+                            <div class="last-msg">${isOnline ? '🟢 Онлайн' : '⚫ Был недавно'}</div>
+                        </div>
+                        <span class="time">${isOnline ? 'сейчас' : ''}</span>
+                    `;
+                    div.addEventListener('click', () => openChat(friendId, 'user', user.nick));
+                    container.appendChild(div);
+                    document.getElementById('friendCount').textContent = onlineCount;
+                });
+            });
+        }
+
+        // =============================================================
+        // ОТКРЫТЬ ЧАТ
+        // =============================================================
+        function openChat(id, type, name) {
+            currentChat = id;
+            currentChatType = type;
+
+            document.getElementById('chatsPanel').style.display = 'none';
+            document.getElementById('friendsPanel').classList.remove('active');
+            document.getElementById('settingsPanel').classList.remove('active');
+            document.getElementById('securityPanel').classList.remove('active');
+            document.getElementById('chatWindow').classList.add('active');
+
+            document.getElementById('chatTitle').textContent = name || 'Чат';
+            document.getElementById('chatAvatar').textContent = name ? name.charAt(0) : '👤';
+            document.getElementById('chatStatus').textContent = type === 'group' ? 'группа' : type === 'channel' ?
+                'канал' : 'онлайн';
+            document.getElementById('chatStatus').className = 'chat-status online';
+
+            unreadCounts[id] = 0;
+            loadMessages(id);
+        }
+
+        document.getElementById('closeChatBtn').addEventListener('click', function() {
+            document.getElementById('chatWindow').classList.remove('active');
+            document.getElementById('chatsPanel').style.display = 'flex';
+            if (messagesListener) { messagesListener(); }
+            renderChats();
+        });
+
+        // =============================================================
+        // ЗАГРУЗКА СООБЩЕНИЙ
+        // =============================================================
+        function loadMessages(chatId) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            const ref = db.ref('mangonofukikuru_messages').child(chatId);
+
+            if (messagesListener) {
+                ref.off();
+                messagesListener = null;
+            }
+
+            ref.orderByChild('timestamp').limitToLast(50).once('value', (snap) => {
+                const messages = snap.val();
+                if (messages) {
+                    const keys = Object.keys(messages).sort((a, b) => messages[a].timestamp - messages[b].timestamp);
+                    keys.forEach(key => {
+                        renderMessage(key, messages[key]);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+
+            messagesListener = ref.orderByChild('timestamp').startAfter(Date.now() - 1000).on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                const existing = container.querySelector(`[data-msg-id="${snapshot.key}"]`);
+                if (!existing && data.timestamp) {
+                    renderMessage(snapshot.key, data);
+                    container.scrollTop = container.scrollHeight;
+
+                    if (data.sender !== userData.id) {
+                        showNotification(data.senderNick || 'Гость', data.text || '📎 Вложение');
+                        unreadCounts[chatId] = (unreadCounts[chatId] || 0) + 1;
+                        renderChats();
+                    }
+                }
+            });
+        }
+
+        function renderMessage(key, data) {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.setAttribute('data-msg-id', key);
+
+            const isSelf = data.sender === userData.id;
+            const isSystem = data.sender === 'system';
+
+            if (isSystem) {
+                msgDiv.className = 'msg msg-system';
+                msgDiv.textContent = data.text || '⚡ Системное сообщение';
+                container.appendChild(msgDiv);
+                return;
+            }
+
+            msgDiv.className = 'msg ' + (isSelf ? 'msg-self' : 'msg-other');
+
+            let nickHtml = '';
+            if (data.sender !== userData.id && data.senderNick) {
+                nickHtml = `<span class="msg-nick">${data.senderNick}</span>`;
+            }
+
+            const time = data.timestamp ? new Date(data.timestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : '';
+
+            let content = '';
+            if (data.text) {
+                content = `<span class="msg-text">${data.text}</span>`;
+            } else if (data.sticker) {
+                content = `<div style="font-size:36px;margin-top:4px;">${data.sticker}</div>`;
+            } else if (data.fileUrl) {
+                content = `<div class="file-container"><a href="${data.fileUrl}" target="_blank" class="file-link">🔗 Открыть файл</a></div>`;
+            } else if (data.voice) {
+                content = `
+                    <div class="voice-container">
+                        <button class="voice-play">▶</button>
+                        <div class="voice-wave">
+                            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                            <div class="bar"></div><div class="bar"></div>
+                        </div>
+                        <span class="voice-time">${data.voiceDuration || '0:03'}</span>
+                    </div>
+                `;
+            } else {
+                content = '📎 Вложение';
+            }
+
+            let actionsHtml = '';
+            if (data.sender === userData.id || isAdmin) {
+                actionsHtml = `
+                    <div class="msg-actions">
+                        <button class="delete-btn" onclick="deleteMessage('${key}','${currentChat}')">✕</button>
+                    </div>
+                `;
+            }
+
+            msgDiv.innerHTML = `
+                ${actionsHtml}
+                ${nickHtml}
+                ${content}
+                <div class="msg-time">${time}</div>
+            `;
+
+            container.appendChild(msgDiv);
+        }
+
+        // =============================================================
+        // ОТПРАВКА СООБЩЕНИЙ
+        // =============================================================
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChat) {
+                if (!currentChat) showNotification('❌', 'Открой чат');
+                return;
+            }
+
+            const data = {
+                sender: userData.id,
+                senderNick: userData.nick,
+                senderColor: userData.chatColor || '#ff6b6b',
+                text: text,
+                timestamp: Date.now()
+            };
+
+            const ref = db.ref('mangonofukikuru_messages').child(currentChat);
+            ref.push(data);
+
+            const updateRef = currentChatType === 'group' ? 'mangonofukikuru_groups' : currentChatType === 'channel' ?
+                'mangonofukikuru_channels' : null;
+            if (updateRef) {
+                db.ref(updateRef).child(currentChat).update({
+                    lastMsg: text,
+                    lastTimestamp: Date.now()
+                });
+            }
+
+            userData.msgCount = (userData.msgCount || 0) + 1;
+            localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+            input.value = '';
+            renderChats();
+        }
+
+        // =============================================================
+        // УДАЛЕНИЕ СООБЩЕНИЙ
+        // =============================================================
+        window.deleteMessage = function(key, chatId) {
+            if (!confirm('Удалить сообщение?')) return;
+            db.ref('mangonofukikuru_messages').child(chatId).child(key).remove();
+            showNotification('🗑', 'Сообщение удалено');
+        };
+
+        // =============================================================
+        // ФАЙЛЫ
+        // =============================================================
+        document.getElementById('fileBtnChat').addEventListener('click', function() {
+            if (!currentChat) {
+                showNotification('❌', 'Открой чат');
+                return;
+            }
+            const link = prompt('Вставьте ссылку на файл:');
+            if (!link || !link.startsWith('http')) {
+                showNotification('❌', 'Некорректная ссылка');
+                return;
+            }
+            const ref = db.ref('mangonofukikuru_messages').child(currentChat);
+            ref.push({
+                sender: userData.id,
+                senderNick: userData.nick,
+                senderColor: userData.chatColor || '#ff6b6b',
+                fileUrl: link,
+                timestamp: Date.now()
+            });
+            userData.msgCount = (userData.msgCount || 0) + 1;
+            localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+            showNotification('✅', 'Файл отправлен');
+        });
+
+        // =============================================================
+        // ЭМОДЗИ
+        // =============================================================
+        document.getElementById('emojiBtnChat').addEventListener('click', function() {
+            document.getElementById('emojiPanelChat').classList.toggle('active');
+        });
+        document.getElementById('emojiPanelChat').addEventListener('click', function(e) {
+            if (e.target.tagName === 'SPAN') {
+                document.getElementById('chatInput').value += e.target.textContent;
+                document.getElementById('emojiPanelChat').classList.remove('active');
+                document.getElementById('chatInput').focus();
+            }
+        });
+
+        // =============================================================
+        // СТИКЕРЫ
+        // =============================================================
+        document.getElementById('stickerBtnChat').addEventListener('click', function() {
+            document.getElementById('stickerPanelChat').classList.toggle('active');
+        });
+        document.getElementById('stickerPanelChat').addEventListener('click', function(e) {
+            if (e.target.tagName === 'SPAN') {
+                const sticker = e.target.textContent;
+                if (!currentChat) {
+                    showNotification('❌', 'Открой чат');
+                    return;
+                }
+                const ref = db.ref('mangonofukikuru_messages').child(currentChat);
+                ref.push({
+                    sender: userData.id,
+                    senderNick: userData.nick,
+                    senderColor: userData.chatColor || '#ff6b6b',
+                    sticker: sticker,
+                    timestamp: Date.now()
+                });
+                userData.msgCount = (userData.msgCount || 0) + 1;
+                localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                document.getElementById('stickerPanelChat').classList.remove('active');
+                renderChats();
+            }
+        });
+
+        // =============================================================
+        // ГОЛОСОВЫЕ
+        // =============================================================
+        document.getElementById('voiceBtnChat').addEventListener('click', function() {
+            if (!currentChat) {
+                showNotification('❌', 'Открой чат');
+                return;
+            }
+
+            if (isRecording) {
+                if (mediaRecorder) {
+                    mediaRecorder.stop();
+                    document.getElementById('voiceBtnChat').textContent = '🎙️';
+                    document.getElementById('voiceBtnChat').classList.remove('active');
+                    isRecording = false;
+                    showNotification('⏹', 'Запись остановлена');
+                }
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = function(event) {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = function() {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onload = function() {
+                            const base64Audio = reader.result;
+                            const ref = db.ref('mangonofukikuru_messages').child(currentChat);
+                            ref.push({
+                                sender: userData.id,
+                                senderNick: userData.nick,
+                                senderColor: userData.chatColor || '#ff6b6b',
+                                voice: base64Audio,
+                                voiceDuration: '0:03',
+                                timestamp: Date.now()
+                            });
+                            userData.msgCount = (userData.msgCount || 0) + 1;
+                            localStorage.setItem('mangonofukikuru_session', JSON.stringify(userData));
+                            showNotification('🎤', 'Голосовое отправлено!');
+                            renderChats();
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('voiceBtnChat').textContent = '⏹';
+                    document.getElementById('voiceBtnChat').classList.add('active');
+                    showNotification('🎤', 'Запись... Нажми ещё раз для остановки');
+                })
+                .catch(function(err) {
+                    showNotification('❌', 'Ошибка микрофона');
+                });
+        });
+
+        // =============================================================
+        // ГРУППЫ И КАНАЛЫ
+        // =============================================================
+        document.getElementById('createGroupBtn').addEventListener('click', function() {
+            const name = prompt('Название группы:');
+            if (!name || name.trim().length < 2) return;
+            const groupRef = db.ref('mangonofukikuru_groups').push();
+            const groupId = groupRef.key;
+            groupRef.set({
+                name: name.trim(),
+                creator: userData.id,
+                members: [userData.id],
+                createdAt: Date.now(),
+                lastMsg: 'Группа создана',
+                lastTimestamp: Date.now()
+            });
+            db.ref('mangonofukikuru_messages').child(groupId).push({
+                sender: 'system',
+                senderNick: 'Система',
+                text: `Группа "${name.trim()}" создана!`,
+                timestamp: Date.now()
+            });
+            renderChats();
+            showNotification('✅', 'Группа создана!');
+        });
+
+        document.getElementById('createChannelBtn').addEventListener('click', function() {
+            const name = prompt('Название канала:');
+            if (!name || name.trim().length < 2) return;
+            const channelRef = db.ref('mangonofukikuru_channels').push();
+            const channelId = channelRef.key;
+            channelRef.set({
+                name: name.trim(),
+                creator: userData.id,
+                members: [userData.id],
+                createdAt: Date.now(),
+                lastMsg: 'Канал создан',
+                lastTimestamp: Date.now()
+            });
+            db.ref('mangonofukikuru_messages').child(channelId).push({
+                sender: 'system',
+                senderNick: 'Система',
+                text: `📡 Канал "${name.trim()}" создан!`,
+                timestamp: Date.now()
+            });
+            renderChats();
+            showNotification('✅', 'Канал создан!');
+        });
+
+        // =============================================================
+        // ВКЛАДКИ
+        // =============================================================
+        document.querySelectorAll('#mainTabs .tab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#mainTabs .tab-btn').forEach(function(b) { b.classList.remove(
+                        'active'); });
+                this.classList.add('active');
+
+                const tab = this.dataset.tab;
+                document.getElementById('chatsPanel').style.display = 'none';
+                document.getElementById('friendsPanel').classList.remove('active');
+                document.getElementById('settingsPanel').classList.remove('active');
+                document.getElementById('securityPanel').classList.remove('active');
+                document.getElementById('chatWindow').classList.remove('active');
+
+                if (tab === 'chats') {
+                    document.getElementById('chatsPanel').style.display = 'flex';
+                    renderChats();
+                } else if (tab === 'friends') {
+                    document.getElementById('friendsPanel').classList.add('active');
+                    renderFriends();
+                } else if (tab === 'settings') {
+                    document.getElementById('settingsPanel').classList.add('active');
+                    updateSettingsUI();
+                    if (isAdmin) {
+                        document.getElementById('adminLoginArea').style.display = 'none';
+                        document.getElementById('adminContent').style.display = 'block';
+                    } else {
+                        document.getElementById('adminLoginArea').style.display = 'block';
+                        document.getElementById('adminContent').style.display = 'none';
+                    }
+                    const scroll = document.getElementById('settingsScroll');
+                    if (scroll) scroll.scrollTop = 0;
+                } else if (tab === 'security') {
+                    document.getElementById('securityPanel').classList.add('active');
+                }
+            });
+        });
+
+        document.getElementById('backFromSettings').addEventListener('click', function() {
+            document.querySelector('#mainTabs .tab-btn[data-tab="chats"]').click();
+        });
+
+        // =============================================================
+        // ПОИСК
+        // =============================================================
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const activeTab = document.querySelector('#mainTabs .tab-btn.active');
+            if (activeTab.dataset.tab === 'chats') {
+                renderChats();
+            } else if (activeTab.dataset.tab === 'friends') {
+                renderFriends();
+            }
+        });
+
+        // =============================================================
+        // ПРИГЛАШЕНИЯ
+        // =============================================================
+        window.openInviteModal = function() {
+            const link = window.location.origin + window.location.pathname + '?invite=' + btoa(userData.id + '|' + Date
+            .now());
+            document.getElementById('inviteLink').textContent = link;
+            document.getElementById('inviteModal').classList.add('active');
+        };
+
+        window.closeInviteModal = function() {
+            document.getElementById('inviteModal').classList.remove('active');
+        };
+
+        window.copyInviteLink = function() {
+            const link = document.getElementById('inviteLink').textContent;
+            navigator.clipboard.writeText(link).then(function() {
+                showNotification('✅', 'Ссылка скопирована!');
+            }).catch(function() {
+                const range = document.createRange();
+                range.selectNode(document.getElementById('inviteLink'));
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                document.execCommand('copy');
+                showNotification('✅', 'Ссылка скопирована!');
+            });
+        };
+
+        window.openAddFriendModal = function() {
+            document.getElementById('addFriendModal').classList.add('active');
+            document.getElementById('friendIdInput').focus();
+        };
+
+        window.closeAddFriendModal = function() {
+            document.getElementById('addFriendModal').classList.remove('active');
+        };
+
+        window.sendFriendRequest = function() {
+            const id = document.getElementById('friendIdInput').value.trim();
+            if (!id || id.length !== 9 || !/^\d+$/.test(id)) {
+                showNotification('❌', 'Введите ID (9 цифр)');
+                return;
+            }
+            if (id === userData.id) {
+                showNotification('❌', 'Нельзя добавить себя');
+                return;
+            }
+
+            const friends = JSON.parse(localStorage.getItem('mangonofukikuru_friends') || '[]');
+            if (friends.includes(id)) {
+                showNotification('❌', 'Уже в друзьях');
+                return;
+            }
+
+            db.ref('mangonofukikuru_users/' + id).once('value', function(snap) {
+                if (!snap.exists()) {
+                    showNotification('❌', 'Пользователь не найден');
+                    return;
+                }
+
+                friends.push(id);
+                localStorage.setItem('mangonofukikuru_friends', JSON.stringify(friends));
+                showNotification('✅', 'Друг добавлен!');
+                document.getElementById('friendIdInput').value = '';
+                closeAddFriendModal();
+                renderChats();
+                renderFriends();
+            });
+        };
+
+        document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // =============================================================
+        // УВЕДОМЛЕНИЯ
+        // =============================================================
+        function showNotification(nick, text) {
+            const el = document.getElementById('notification');
+            document.getElementById('notifNick').textContent = nick;
+            document.getElementById('notifText').textContent = ': ' + text;
+            el.classList.add('show');
+            clearTimeout(window.notifTimeout);
+            window.notifTimeout = setTimeout(function() { el.classList.remove('show'); }, 3000);
+        }
+
+        // =============================================================
+        // ЧЕК ИНВАЙТА
+        // =============================================================
+        function checkInvite() {
+            const params = new URLSearchParams(window.location.search);
+            const invite = params.get('invite');
+            if (invite) {
+                try {
+                    const decoded = atob(invite);
+                    const [friendId] = decoded.split('|');
+                    if (friendId && friendId !== userData.id) {
+                        const friends = JSON.parse(localStorage.getItem('mangonofukikuru_friends') || '[]');
+                        if (!friends.includes(friendId)) {
+                            friends.push(friendId);
+                            localStorage.setItem('mangonofukikuru_friends', JSON.stringify(friends));
+                            showNotification('✅', 'Друг добавлен по ссылке!');
+                        }
+                    }
+                } catch (e) {}
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // =============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // =============================================================
+        function setupEventListeners() {
+            document.getElementById('pinBtn').addEventListener('click', function() {
+                if (currentChat) togglePin(currentChat);
+            });
+
+            const savedSettings = localStorage.getItem('mangonofukikuru_settings');
+            if (savedSettings) {
+                try {
+                    const parsed = JSON.parse(savedSettings);
+                    Object.assign(userSettings, parsed);
+                } catch (e) {}
+            }
+        }
+
+        // =============================================================
+        // ЗАПУСК
+        // =============================================================
+        if (!checkSession()) {
+            document.getElementById('authPage').style.display = 'flex';
+            document.getElementById('mainApp').classList.remove('active');
+        } else {
+            showMainApp();
+            checkInvite();
+        }
+
+        console.log('🔐 マンゴノフキクル — точно как Telegram');
+        console.log('📢 Наш канал: @realmmessenger');
+        console.log('🛡️ Безопасность активирована');
+        console.log('👑 Админ-панель в настройках');
+        console.log('🔑 Пароль админа:', ADMIN_PASSWORD);
+        console.log('⭐ Premium — АБСОЛЮТНО БЕСПЛАТНЫЙ!');
+        console.log('👤 Автор: Roman (rebenock999888-beep)');
+    </script>
+
+</body>
+</html>
